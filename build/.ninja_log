@@ -1,0 +1,16 @@
+# ninja log v5
+143	1556	7261412223901603	CMakeFiles/main.dir/styles/styles.cxx.obj	f8c7f3782e1c6ab8
+13577	19898	7261412407869548	CMakeFiles/main.dir/C_/Users/240821/app/imgui/imgui_tables.cpp.obj	7f9765cbb0211447
+13986	22538	7261412434561540	CMakeFiles/main.dir/C_/Users/240821/app/imgui/imgui_widgets.cpp.obj	a22d17fd9e6d1ae3
+201	2126	7261412227829288	CMakeFiles/main.dir/widgets/center_control_helper/center_control_helper.cxx.obj	9db155bfdd0f16ec
+26	3601	7261418750371676	CMakeFiles/main.dir/dx_context/directx_context.cxx.obj	4914256543276c0e
+13496	19133	7261412399920485	CMakeFiles/main.dir/C_/Users/240821/app/imgui/imgui_demo.cpp.obj	f52929db5411b401
+1624	13482	7261412341513307	CMakeFiles/main.dir/C_/Users/240821/app/imgui/backends/imgui_impl_win32.cpp.obj	cc4c99df97fe105d
+21	3011	7261539735590908	CMakeFiles/main.dir/main.cpp.obj	3c9d28eed2a80c4b
+2300	13891	7261412347450844	CMakeFiles/main.dir/C_/Users/240821/app/imgui/backends/imgui_impl_dx12.cpp.obj	40152ae2bcfc56ee
+38	3991	7261418754419545	CMakeFiles/main.dir/imgui_context/imgui_context.cxx.obj	cfd4fad5706bac36
+3012	3668	7261539742022966	main.exe	855e419572d96287
+271	18313	7261412391119009	CMakeFiles/main.dir/C_/Users/240821/app/imgui/imgui.cpp.obj	4e4306a543f77a1b
+13388	21462	7261412423712131	CMakeFiles/main.dir/C_/Users/240821/app/imgui/imgui_draw.cpp.obj	13867a1f821165e
+28	3611	7261820817684499	CMakeFiles/main.dir/main.cpp.obj	3c9d28eed2a80c4b
+3612	4346	7261820824874699	main.exe	855e419572d96287
