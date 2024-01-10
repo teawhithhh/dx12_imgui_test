@@ -33,15 +33,12 @@ Index of this file:
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-
-#ifndef WIDGETS
-#define WIDGETS
-
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
 #include "center_control_helper/center_control_helper.hxx"
+#include "imgui_custom_widgets.hxx"
 #include "imgui_internal.h"
 #include "imgui.h"
 
@@ -78,11 +75,6 @@ Index of this file:
 //-------------------------------------------------------------------------
 
 
-
-namespace ImGui_cWidgets {
-    bool C_ButtonEx(const char*, const ImVec2&, ImGuiButtonFlags);
-    bool C_Button(const char*, const ImVec2&);
-}
 
 using namespace ImGui;
 
@@ -132,5 +124,3 @@ bool ImGui_cWidgets::C_Button(const char* label, const ImVec2& size_arg)
 {
     return CENTERED_CONTROL(C_ButtonEx(label, size_arg, ImGuiButtonFlags_None));
 }
-
-#endif

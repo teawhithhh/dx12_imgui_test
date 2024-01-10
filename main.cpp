@@ -33,14 +33,11 @@ int main(int, char**)
     dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, (screenWidth/2)-WIDTH/2, (screenHeight/2)-HEIGHT/2);
 
     // Инициализация dear imgui
-    ImGui_context_ns::ImGui_context imgui_wnd(wnd.get_hwnd());
+    ImGui_context_ns::ImGui_context imgui_wnd(wnd.get_hwnd(), WIDTH, HEIGHT);
 
     static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 0.00f);
 
-    auto [width, height] = wnd.get_size();
-
-
-    bool show_test_window = true;
+    imgui_wnd.current_window = ImGui_context_ns::id_wnd::login_window;
     bool done = false;
     while (!done)
     {
@@ -61,8 +58,10 @@ int main(int, char**)
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        if (show_test_window)
-            imgui_wnd.test_window(clear_color, width, height);
+        if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::login_window)
+            imgui_wnd.call_window(ImGui_context_ns::id_wnd::login_window);
+        if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::test_window)
+            imgui_wnd.call_window(ImGui_context_ns::id_wnd::test_window);
 
        // Рендер кадра ImGui
         ImGui::Render();

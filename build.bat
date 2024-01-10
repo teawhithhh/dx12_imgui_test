@@ -1,5 +1,5 @@
 @echo off
-cd C:\Users\240821\app\imgui\examples\example_win32_directx12\build
+cd .\build
 echo -- CMAKE START
 cmake ..
 echo -- CMAKE END

@@ -11,7 +11,9 @@ add_executable(main
     ./dx_context/directx_context.cxx
     ./imgui_context/imgui_context.cxx
     ./styles/styles.cxx
+    ./widgets/imgui_custom_widgets.cxx
     ./widgets/center_control_helper/center_control_helper.cxx
+    ./windows/initialize_windows.cxx
     ${IMGUI_DIR}/imgui.cpp
     ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
     ${IMGUI_DIR}/backends/imgui_impl_dx12.cpp
@@ -28,6 +30,7 @@ include_directories(
     ./styles
     ./imgui_context
     ./dx_context
+    ./windows
 )
 
 # Линковка с библиотеками
