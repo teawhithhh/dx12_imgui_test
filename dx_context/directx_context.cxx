@@ -244,7 +244,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-void DX_WINDOW::render_loop_dx12(ImVec4 color)
+void DX_WINDOW::render_loop_dx12()
 {
     FrameContext* frameCtx = WaitForNextFrameResources();
 
@@ -266,7 +266,7 @@ void DX_WINDOW::render_loop_dx12(ImVec4 color)
 
     // Render Dear ImGui graphics
 
-    const float clear_color_with_alpha[4] = { color.x * color.w, color.y * color.w, color.z * color.w, color.w };
+    const float clear_color_with_alpha[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
     g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
     g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);

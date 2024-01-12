@@ -35,8 +35,6 @@ int main(int, char**)
     // Инициализация dear imgui
     ImGui_context_ns::ImGui_context imgui_wnd(wnd.get_hwnd(), WIDTH, HEIGHT);
 
-    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 0.00f);
-
     imgui_wnd.current_window = ImGui_context_ns::id_wnd::login_window;
     bool done = false;
     while (!done)
@@ -54,17 +52,21 @@ int main(int, char**)
             break;
 
         // Начало кадра imgui
-        ImGui_ImplDX12_NewFrame();
-        ImGui_ImplWin32_NewFrame();
+        ::ImGui_ImplDX12_NewFrame();
+        ::ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
         if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::login_window)
             imgui_wnd.call_window(ImGui_context_ns::id_wnd::login_window);
         if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::test_window)
             imgui_wnd.call_window(ImGui_context_ns::id_wnd::test_window);
+        if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::demo_window)
+            imgui_wnd.call_window(ImGui_context_ns::id_wnd::demo_window);
+        if (imgui_wnd.logger_enabled == true)
+            imgui_wnd.call_window(ImGui_context_ns::id_wnd::logger);
 
        // Рендер кадра ImGui
         ImGui::Render();
-        wnd.render_loop_dx12(clear_color);
+        wnd.render_loop_dx12();
     }
 }

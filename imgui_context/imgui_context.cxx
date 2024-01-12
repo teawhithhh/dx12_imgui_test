@@ -2,7 +2,7 @@
 #define IMGUI_SETUP
 
 #include "imgui_context.hxx"
-#include "styles.hxx"
+#include "spectrum.hxx"
 #include "directx_context.hxx"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -19,11 +19,11 @@ ImGui_context::ImGui_context(HWND hwnd_, int width_, int height_) : width{width_
     initialize_wnd_vec();
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    io_ptr = std::unique_ptr<ImGuiIO>(new ImGuiIO(ImGui::GetIO())); (void)*io_ptr;
-    io_ptr->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    auto &io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
     // Setup Dear ImGui style
-    Style::embraceTheDarkness();
+    ImGui::Spectrum::StyleColorsSpectrum();
     //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
@@ -45,8 +45,7 @@ ImGui_context::~ImGui_context()
 
 bool ImGui_context::call_window(id_wnd index)
 {
-    IMGUI_WINDOWS[static_cast<unsigned long long>(index)]();
-    return true;
+    return IMGUI_WINDOWS[index]();
 }
 
 #endif

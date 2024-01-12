@@ -13,11 +13,13 @@ bool test_window(int width, int height)
 
     ImGui::Begin("Hello, world!", &Window_Opened, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);                          // Create a window called "Hello, world!" and append into it.
 
-    if (ImGui_cWidgets::C_Button("Button", ImVec2(500, 40)))                           // Buttons return true when clicked (most widgets return true when edited/activated)
+    if (ImGui_cWidgets::C_Button("Button", ImVec2(300, 40), 10.0f))                           // Buttons return true when clicked (most widgets return true when edited/activated)
         ImGui_context_ns::ImGui_context::current_window = ImGui_context_ns::id_wnd::login_window;
     CENTERED_CONTROL(ImGui::Text("counter = %d", counter));
 
+    #ifdef DEBUG
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    #endif
     ImGui::End();
     return true;
 }

@@ -78,7 +78,7 @@ Index of this file:
 
 using namespace ImGui;
 
-bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags flags)
+bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, float rounding ,ImGuiButtonFlags flags)
 {
 
     ImGuiWindow* window = GetCurrentWindow();
@@ -106,7 +106,7 @@ bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, ImGui
     // Render
     const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
     RenderNavHighlight(bb, id);
-    RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
+    RenderFrame(bb.Min, bb.Max, col, true, ImMax(style.FrameRounding, rounding));
 
     if (g.LogEnabled)
         LogSetNextTextDecoration("[", "]");
@@ -120,7 +120,7 @@ bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, ImGui
     return pressed;
 }
 
-bool ImGui_cWidgets::C_Button(const char* label, const ImVec2& size_arg)
+bool ImGui_cWidgets::C_Button(const char* label, const ImVec2& size_arg, float rounding)
 {
-    return CENTERED_CONTROL(C_ButtonEx(label, size_arg, ImGuiButtonFlags_None));
+    return CENTERED_CONTROL(C_ButtonEx(label, size_arg, rounding, ImGuiButtonFlags_None));
 }

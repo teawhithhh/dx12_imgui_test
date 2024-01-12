@@ -26,7 +26,7 @@ public:
                                                DX_WINDOW(const wchar_t*, int, int, int, int);
                                                ~DX_WINDOW();
 
-    void                                       render_loop_dx12(ImVec4);
+    void                                       render_loop_dx12();
 
     FrameContext*                              WaitForNextFrameResources();
     static void                                WaitForLastSubmittedFrame();
