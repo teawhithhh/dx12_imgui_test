@@ -38,9 +38,11 @@ Index of this file:
 #endif
 
 #include "center_control_helper/center_control_helper.hxx"
+#include "parser.hxx"
 #include "imgui_custom_widgets.hxx"
 #include "imgui_internal.h"
 #include "imgui.h"
+#include "spectrum.hxx"
 
 // System includes
 #include <stdint.h>     // intptr_t
@@ -74,12 +76,11 @@ Index of this file:
 // Data
 //-------------------------------------------------------------------------
 
-
-
 using namespace ImGui;
 
 bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, float rounding ,ImGuiButtonFlags flags)
 {
+    auto& cfg = Toml_Parser::cfg;
 
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -110,7 +111,9 @@ bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, float
 
     if (g.LogEnabled)
         LogSetNextTextDecoration("[", "]");
+    PushStyleColor(ImGuiCol_Text, CONFIG(["button"]["button_text_color"]));
     RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, NULL, &label_size, style.ButtonTextAlign, &bb);
+    PopStyleColor();
 
     // Automatically close popups
     //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))

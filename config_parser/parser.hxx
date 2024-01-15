@@ -10,6 +10,7 @@ class Toml_Parser {
     public:
         Toml_Parser();
         toml::table& get_parse_result();
+        inline static toml::table cfg;
 
     private:
         inline static constexpr std::string_view standart_cfg =
@@ -74,6 +75,7 @@ border_shadow_color = "0x00000000"
 button_color = "0x692A2A"
 button_hovered_color = "0x853838"
 button_active_color = "0x692A2A"
+button_text_color = "0xffffff"
 
 [drag_drop]
 drag_drop_target_color = "0xffffff"
@@ -82,7 +84,7 @@ drag_drop_target_color = "0xffffff"
 nav_highlight_color = 0xffffff
 nav_window_highlight_color = 0xffffff
 )"sv;
-        toml::table cfg;
+
 
         void write_cfg();
         void read_cfg();

@@ -14,7 +14,7 @@ public:
     Logger();
     void Clear();
     void AddLog(type_log type, const char* fmt, ...) IM_FMTARGS(3);
-    void Draw(const char* title, bool* p_open);
+    void Draw(const char* title);
     static Logger& GetLogger();
 };
 #endif

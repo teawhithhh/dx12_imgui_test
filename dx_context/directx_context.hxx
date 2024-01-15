@@ -23,7 +23,7 @@ struct dx::FrameContext
 
 class dx::DX_WINDOW {
 public:
-                                               DX_WINDOW(const wchar_t*, int, int, int, int);
+                                               DX_WINDOW(const wchar_t*, int, int, int, int, int);
                                                ~DX_WINDOW();
 
     void                                       render_loop_dx12();
@@ -46,9 +46,13 @@ private:
     HWND                                       hWnd;
     int                                        height;
     int                                        width;
+    int                                        round_radius;
 
     bool                                       CreateDeviceD3D();
     void                                       CleanupDeviceD3D();
+
+    HRGN                                       CreateRoundRectRgn(int x, int y, int width, int height, int radius);
+    void                                       SetWindowRoundCorners();
 
     inline static FrameContext                 g_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
     inline static UINT                         g_frameIndex = 0;

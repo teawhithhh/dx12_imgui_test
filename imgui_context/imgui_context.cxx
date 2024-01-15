@@ -5,6 +5,7 @@
 #include "spectrum.hxx"
 #include "directx_context.hxx"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
 #include <d3d12.h>
@@ -14,7 +15,7 @@
 
 using namespace ImGui_context_ns;
 
-ImGui_context::ImGui_context(HWND hwnd_, int width_, int height_) : width{width_}, height{height_}, hwnd{hwnd_}
+ImGui_context::ImGui_context(HWND hwnd_, int width_, int height_, int& posX_, int& posY_) : width{width_}, height{height_}, posX{posX_}, posY{posY_}, hwnd{hwnd_}
 {
     initialize_wnd_vec();
     IMGUI_CHECKVERSION();
@@ -41,6 +42,18 @@ ImGui_context::~ImGui_context()
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
+}
+
+void ImGui_context::Render_()
+{
+    ImGuiContext * ctx = ImGui::GetCurrentContext();
+    std::stable_sort( ctx->Windows.begin(), ctx->Windows.end(),
+            []( const ImGuiWindow * a, const ImGuiWindow * b ) {
+                    return a->BeginOrderWithinContext < b->BeginOrderWithinContext;
+            }
+);
+
+ImGui::Render();
 }
 
 bool ImGui_context::call_window(id_wnd index)

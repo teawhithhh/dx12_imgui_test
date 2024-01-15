@@ -8,7 +8,7 @@ set(IMGUI_DIR "C:/Users/240821/app/imgui")
 set(DEBUG_FLAGS "-D DEBUG -D DEBUG_STYLES")
 set(STYLE_FLAGS "-D SPECTRUM_USE_LIGHT_THEME")
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${STYLE_FLAGS} ${DEBUG_FLAGS}")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${STYLE_FLAGS} ${IMGUI_FLAGS} ${DEBUG_FLAGS}")
 
 add_executable(main
     main.cpp
@@ -20,6 +20,7 @@ add_executable(main
     ./windows/initialize_windows.cxx
     ./windows/logger.cxx
     ./config_parser/parser.cxx
+    ./windows/controler_z_order/control_z_order.cxx
     ${IMGUI_DIR}/imgui.cpp
     ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
     ${IMGUI_DIR}/backends/imgui_impl_dx12.cpp

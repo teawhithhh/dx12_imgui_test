@@ -5,6 +5,7 @@
 #include <string_view>
 #include <fstream>
 
+
 Toml_Parser::Toml_Parser() {
     if (!std::filesystem::exists("config.toml"))
         write_cfg();
@@ -27,6 +28,7 @@ void Toml_Parser::read_cfg() {
     toml::table res;
     try {
         cfg = toml::parse(str_cfg);
+        log_.AddLog(type_log::info, "%s", "Parsing Succesed");
     } catch (const toml::parse_error& err) {
         log_.AddLog(type_log::error, "%s", "Parsing failed");
         cfg = toml::parse(standart_cfg);

@@ -20,6 +20,8 @@ we need to have them defined at here at compile time.
 //#define SPECTRUM_USE_DARK_THEME
 #endif
 
+#define CONFIG(args) ColorConvertU32ToFloat4(ImGui::Spectrum::Color(static_cast<unsigned int>(std::stoi(cfg args.value_or("0xffffff"), nullptr, 16))))
+
 namespace ImGui {
     namespace Spectrum {
         // a list of changes introduced to change the look of the widgets.

@@ -11,19 +11,24 @@
 
 namespace ImGui_context_ns{
     class ImGui_context;
-    enum class id_wnd { test_window, login_window, demo_window, logger};
+    enum class id_wnd { window_decorator, test_window, login_window, demo_window, logger};
 }
 
 class ImGui_context_ns::ImGui_context {
     public:
-        ImGui_context(HWND hwnd_, int width_, int height_);
+        ImGui_context(HWND hwnd_, int width_, int height_, int& posX, int& posY);
         ~ImGui_context();
+        void Render_();
         bool call_window(id_wnd index);
         inline static id_wnd current_window;
-        inline static bool logger_enabled;
+        inline static bool logger_enabled = true;
+        inline static bool decorator_enabled = true;
     private:
         int width;
         int height;
+
+        int& posX;
+        int& posY;
 
         HWND hwnd;
         void initialize_wnd_vec();

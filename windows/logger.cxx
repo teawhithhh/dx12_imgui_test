@@ -1,4 +1,5 @@
 #include "imgui.h"
+#include "controler_z_order/control_z_order.hxx"
 #include "logger.hxx"
 #include <string>
 
@@ -51,13 +52,9 @@ void Logger::AddLog(type_log type, const char* fmt, ...)
             LineOffsets.push_back(old_size + 1);
 }
 
-void Logger::Draw(const char* title, bool* p_open = NULL)
+void Logger::Draw(const char* title)
 {
-    if (!ImGui::Begin(title, p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoFocusOnAppearing))
-    {
-        ImGui::End();
-        return;
-    }
+    ImGui::Begin(title, WindowZOrder::WindowZOrder_Logger, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
     // Options menu
     if (ImGui::BeginPopup("Options"))
@@ -139,6 +136,7 @@ void Logger::Draw(const char* title, bool* p_open = NULL)
     }
     ImGui::EndChild();
     ImGui::End();
+
 }
 
 Logger& Logger::GetLogger() {

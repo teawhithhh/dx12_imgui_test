@@ -4,8 +4,6 @@
 #include "imgui.h"
 #include <iostream>
 
-#define CONFIG(args) ColorConvertU32ToFloat4(Color(static_cast<unsigned int>(std::stoi(cfg args.value_or("0xffffff"), nullptr, 16))))
-
 namespace ImGui {
     namespace Spectrum {
         extern const unsigned int SourceSansProRegular_compressed_size = 149392;
@@ -21,8 +19,8 @@ namespace ImGui {
         void StyleColorsSpectrum() {
 
             ImGuiStyle* style = &ImGui::GetStyle();
-
             Toml_Parser parser;
+
             auto cfg = parser.get_parse_result();
 
             LoadFont();

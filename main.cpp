@@ -11,6 +11,7 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <tchar.h>
+#include "logger.hxx"
 
 #define WIDTH 900
 #define HEIGHT 600
@@ -24,16 +25,21 @@
 #pragma comment(lib, "dxguid.lib")
 #endif
 
+
 int main(int, char**)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
+    static int posX = (screenWidth/2)-WIDTH/2;
+    static int posY = (screenHeight/2)-HEIGHT/2;
+
+
     // Инициализация directx
-    dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, (screenWidth/2)-WIDTH/2, (screenHeight/2)-HEIGHT/2);
+    dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, static_cast<int>(posX), static_cast<int>(posY), 10);
 
     // Инициализация dear imgui
-    ImGui_context_ns::ImGui_context imgui_wnd(wnd.get_hwnd(), WIDTH, HEIGHT);
+    ImGui_context_ns::ImGui_context imgui_wnd(wnd.get_hwnd(), WIDTH, HEIGHT-25, posX, posY);
 
     imgui_wnd.current_window = ImGui_context_ns::id_wnd::login_window;
     bool done = false;
@@ -64,9 +70,13 @@ int main(int, char**)
             imgui_wnd.call_window(ImGui_context_ns::id_wnd::demo_window);
         if (imgui_wnd.logger_enabled == true)
             imgui_wnd.call_window(ImGui_context_ns::id_wnd::logger);
+        if (imgui_wnd.decorator_enabled == true)
+            imgui_wnd.call_window(ImGui_context_ns::id_wnd::window_decorator);
+
+        SetWindowPos(wnd.get_hwnd(), NULL, posX, posY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
 
        // Рендер кадра ImGui
-        ImGui::Render();
+        imgui_wnd.Render_();
         wnd.render_loop_dx12();
     }
 }

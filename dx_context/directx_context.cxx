@@ -9,6 +9,8 @@
 #include <tchar.h>
 #include <thread>
 
+#include "windows.h"
+
 #include "directx_context.hxx"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -216,34 +218,6 @@ FrameContext* DX_WINDOW::WaitForNextFrameResources()
 
 
 
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-        return true;
-
-    switch (msg)
-    {
-    case WM_SIZE:
-        if (DX_WINDOW::g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
-        {
-            DX_WINDOW::WaitForLastSubmittedFrame();
-            DX_WINDOW::CleanupRenderTarget();
-            HRESULT result = DX_WINDOW::g_pSwapChain->ResizeBuffers(0, static_cast<UINT>(LOWORD(lParam)), static_cast<UINT>(HIWORD(lParam)), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
-            assert(SUCCEEDED(result) && "Failed to resize swapchain.");
-            DX_WINDOW::CreateRenderTarget();
-        }
-        return 0;
-    case WM_SYSCOMMAND:
-        if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
-            return 0;
-        break;
-    case WM_DESTROY:
-        ::PostQuitMessage(0);
-        return 0;
-    }
-    return ::DefWindowProcW(hWnd, msg, wParam, lParam);
-}
-
 void DX_WINDOW::render_loop_dx12()
 {
     FrameContext* frameCtx = WaitForNextFrameResources();
@@ -287,13 +261,54 @@ void DX_WINDOW::render_loop_dx12()
     frameCtx->FenceValue = fenceValue;
 }
 
-DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX = 0, int posY = 0)
+HRGN DX_WINDOW::CreateRoundRectRgn(int x, int y, int width, int height, int radius)
 {
-    wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, name, nullptr };
+    int diameter = radius * 2;
+    return ::CreateRoundRectRgn(x, y, x + width, y + height, diameter, diameter);
+}
+
+void DX_WINDOW::SetWindowRoundCorners()
+{
+    HRGN hRgn = CreateRoundRectRgn(0, 0, width, height, round_radius);
+    SetWindowRgn(hWnd, hRgn, TRUE);
+    DeleteObject(hRgn);
+}
+
+LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+        return true;
+
+    switch (msg)
+    {
+    case WM_SIZE:
+        if (DX_WINDOW::g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
+        {
+            DX_WINDOW::WaitForLastSubmittedFrame();
+            DX_WINDOW::CleanupRenderTarget();
+            HRESULT result = DX_WINDOW::g_pSwapChain->ResizeBuffers(0, static_cast<UINT>(LOWORD(lParam)), static_cast<UINT>(HIWORD(lParam)), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
+            assert(SUCCEEDED(result) && "Failed to resize swapchain.");
+            DX_WINDOW::CreateRenderTarget();
+        }
+        return 0;
+    case WM_SYSCOMMAND:
+        if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+            return 0;
+        break;
+    case WM_DESTROY:
+        ::PostQuitMessage(0);
+        return 0;
+    }
+    return ::DefWindowProcW(hWnd, msg, wParam, lParam);
+}
+
+DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int posY, int r_radius) : height{height_}, width{width_}, round_radius{r_radius}
+{
+    wc = { sizeof(wc), CS_CLASSDC, &WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, name, nullptr };
     ::RegisterClassExW(&wc);
     hWnd = ::CreateWindowW(wc.lpszClassName, name, WS_POPUP | WS_OVERLAPPED | WS_BORDER, posX, posY, width_, height_, nullptr, nullptr, wc.hInstance, nullptr);
-    width = width_;
-    height = height_;
+
+    SetWindowRoundCorners();
 
     // Initialize Direct3D
     if (!CreateDeviceD3D())
