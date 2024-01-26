@@ -21,7 +21,7 @@ we need to have them defined at here at compile time.
 #endif
 #include "imgui.h"
 
-#define CONFIG(args) ImGui::ColorConvertU32ToFloat4(ImGui::Style::Color(static_cast<unsigned int>(std::stoi(cfg args.value_or("0xffffff"), nullptr, 16))))
+#define CONFIG(args) ImGui::ColorConvertU32ToFloat4(ImGui::Style::Color(static_cast<unsigned int>(std::stoi(cfg_ args.value_or("0xffffff"), nullptr, 16))))
 
 namespace ImGui {
     namespace Style {

@@ -14,9 +14,9 @@ namespace ImGuiContextNs{
             ~ImGuiWindowContext();
             void Render();
             bool CallWindow(id_wnd index);
-            inline static id_wnd currentWindow;
-            inline static bool loggerEnabled = true;
-            inline static bool decoratorEnabled = true;
+            inline static id_wnd g_currentWindow;
+            inline static bool g_loggerEnabled = true;
+            inline static bool g_decoratorEnabled = true;
         private:
             int width_;
             int height_;

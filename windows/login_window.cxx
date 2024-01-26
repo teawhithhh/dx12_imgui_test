@@ -1,14 +1,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 
+#include "button.hxx"
 #include "center_control_helper/center_control_helper.hxx"
 #include "controler_z_order/control_z_order.hxx"
 #include "directx_context.hxx"
 #include "imgui_context.hxx"
 #include "stb_image.h"
-#include "imgui_custom_widgets.hxx"
 #include "imgui.h"
 #include "parser.hxx"
 #include "logger.hxx"
+#include "iostream"
+
+void OnClickLogin();
+void OnClickRegister();
 
 bool login_window(int width, int height)
 {
@@ -37,19 +41,14 @@ bool login_window(int width, int height)
 
 
     ImVec2 pos = ImVec2(static_cast<float>(width)/2 - 200, ImGui::GetCursorPos().y + 25);
+
     ImGui::SetCursorPos(pos);
-    if (ImGui_cWidgets::C_Button("Register", ImVec2(150, 40), 10.0f))
-    {
-    #ifndef DEBUG_STYLES
-        ImGuiContextNs::ImGuiWindowContext::currentWindow = ImGuiContextNs::id_wnd::test_window;
-    #else
-        ImGuiContextNs::ImGuiWindowContext::currentWindow = ImGuiContextNs::id_wnd::demo_window;
-    #endif
-    }
+    static Button Register("Register", ImVec2(150, 40), 10.0f, OnClickRegister);
+    Register();
 
     ImGui::SetCursorPos(ImVec2(pos.x + 250, pos.y));
-    if (ImGui_cWidgets::C_Button("Login", ImVec2(150, 40), 10.0f))
-    {}
+    static Button Login("Login", ImVec2(150, 40), 10.0f, OnClickLogin);
+    Login();
 
     #ifdef DEBUG
     ImGui::SetCursorPos(ImVec2(5, 5));
@@ -58,4 +57,18 @@ bool login_window(int width, int height)
 
     ImGui::End();
     return true;
+}
+
+void OnClickRegister()
+{
+    #ifndef DEBUG_STYLES
+        ImGuiContextNs::ImGuiWindowContext::g_currentWindow = ImGuiContextNs::id_wnd::test_window;
+    #else
+        ImGuiContextNs::ImGuiWindowContext::g_currentWindow = ImGuiContextNs::id_wnd::demo_window;
+    #endif
+}
+
+void OnClickLogin()
+{
+    std::cout << "lol\n";
 }

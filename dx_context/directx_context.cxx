@@ -228,7 +228,7 @@ FrameContext* DX_WINDOW::WaitForNextFrameResources()
 
 
 
-void DX_WINDOW::render_loop_dx12()
+void DX_WINDOW::RenderLoopDX12()
 {
     FrameContext* frameCtx = WaitForNextFrameResources();
 

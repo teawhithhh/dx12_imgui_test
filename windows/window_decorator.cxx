@@ -1,17 +1,19 @@
 #include <exception>
-#define IM_VEC2_CLASS_EXTRA
-#define IMGUI_DEFINE_MATH_OPERATORS
+#include <iostream>
 
+#include "button.hxx"
 #include "imgui.h"
 #include "style.hxx"
 #include "parser.hxx"
 #include "logger.hxx"
-#include "imgui_custom_widgets.hxx"
 #include "controler_z_order/control_z_order.hxx"
+
+void OnClickMinimize();
+void OnClickExit();
 
 void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize)
 {
-    auto& cfg = Toml_Parser::cfg;
+    auto& cfg_ = Toml_Parser::cfg;
     ImGui::SetNextWindowPos(ImVec2(-1,-1));
     ImGui::SetNextWindowSize(windowSize);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, CONFIG(["decorator"]["decorator_color"]));
@@ -40,19 +42,32 @@ void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize)
         is_holding = false;
     }
 
+    static Button exit_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 3, -2, ImGuiButtonFlags_None, OnClickExit);
+    static Button minimize_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 30, -2, ImGuiButtonFlags_None, OnClickMinimize);
+
     ImGui::PushStyleColor(ImGuiCol_Button, CONFIG(["control_buttons"]["exit_button_color"]));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CONFIG(["control_buttons"]["exit_button_color_hovered"]));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, CONFIG(["control_buttons"]["exit_button_color_active"]));
-    if (ImGui_cWidgets::C_ButtonEx(" ", ImVec2(20,20), 10.0f, ImGui_cWidgets::button_pos::right, 3, -2, ImGuiButtonFlags_None))
-        exit(0);
+    exit_button();
     ImGui::PopStyleColor(3);
+
     ImGui::SameLine();
+
     ImGui::PushStyleColor(ImGuiCol_Button, CONFIG(["control_buttons"]["minimize_button_color"]));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CONFIG(["control_buttons"]["minimize_button_color_hovered"]));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, CONFIG(["control_buttons"]["minimize_button_color_active"]));
-    if (ImGui_cWidgets::C_ButtonEx(" ", ImVec2(20,20), 10.0f, ImGui_cWidgets::button_pos::right, 30, -2, ImGuiButtonFlags_None))
-        exit(0);
+    minimize_button();
     ImGui::PopStyleColor(3);
 
     ImGui::End();
+}
+
+void OnClickMinimize()
+{
+    exit(0);
+}
+
+void OnClickExit()
+{
+    exit(0);
 }

@@ -19,7 +19,7 @@ namespace ImGui {
         void SetupStyle() {
 
             ImGuiStyle* style = &ImGui::GetStyle();
-            auto cfg = get_parse_result();
+            auto& cfg_ = get_parse_result();
             LoadFont(18);
             style->GrabRounding = 4.0f;
 

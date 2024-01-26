@@ -1,7 +1,7 @@
 #include "center_control_helper/center_control_helper.hxx"
+#include "button.hxx"
 #include "controler_z_order/control_z_order.hxx"
 #include "imgui_context.hxx"
-#include "imgui_custom_widgets.hxx"
 #include "imgui.h"
 
 bool test_window(int width, int height)
@@ -14,8 +14,8 @@ bool test_window(int width, int height)
 
     ImGui::Begin("Hello, world!", WindowZOrder_MainWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    if (CENTERED_CONTROL(ImGui_cWidgets::C_Button("Button", ImVec2(300, 40), 10.0f)))                           // Buttons return true when clicked (most widgets return true when edited/activated)
-        ImGuiContextNs::ImGuiWindowContext::currentWindow = ImGuiContextNs::id_wnd::login_window;
+    Button button("Button", ImVec2(300, 40), 10.0f, [](){ImGuiContextNs::ImGuiWindowContext::g_currentWindow = ImGuiContextNs::id_wnd::login_window;});
+    CENTERED_CONTROL(button());
     CENTERED_CONTROL(ImGui::Text("counter = %d", counter));
 
     #ifdef DEBUG

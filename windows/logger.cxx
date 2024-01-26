@@ -1,7 +1,7 @@
+#include "button.hxx"
 #include "imgui.h"
 #include "style.hxx"
 #include "parser.hxx"
-#include "imgui_custom_widgets.hxx"
 #include "controler_z_order/control_z_order.hxx"
 #include "logger.hxx"
 #include <string>
@@ -58,9 +58,9 @@ void Logger::AddLog(type_log type, const char* fmt, ...)
 
 void Logger::Draw(const char* title)
 {
-    auto& cfg = Toml_Parser::cfg;
+    auto& cfg_ = Toml_Parser::cfg;
     ImGui::PushStyleColor(ImGuiCol_WindowBg, CONFIG(["logger_window"]["logger_window_color"]));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, std::stof(cfg["logger_window"]["logger_window_rounding"].value_or("0.0")));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, std::stof(cfg_["logger_window"]["logger_window_rounding"].value_or("0.0")));
     ImGui::Begin(title, WindowZOrder::WindowZOrder_Logger, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
     ImGui::PopStyleColor();
 
@@ -72,13 +72,21 @@ void Logger::Draw(const char* title)
     }
 
     // Main window
-    if (ImGui_cWidgets::C_ButtonEx("options", ImVec2(0,0), 5, ImGui_cWidgets::button_pos::STANDART, 0, ImGuiButtonFlags_None))
-        ImGui::OpenPopup("Options");
+    static Button optionsButton("options", ImVec2(0,0), 5, button_pos::STANDART, 0, 0, ImGuiButtonFlags_None, [](){ ImGui::OpenPopup("Options"); });
+    optionsButton();
+
     ImGui::SameLine();
-    bool clear = ImGui_cWidgets::C_ButtonEx("clear", ImVec2(0,0), 5, ImGui_cWidgets::button_pos::STANDART, 0, ImGuiButtonFlags_None);
+
+    static Button clearButton("clear", ImVec2(0,0), 5, button_pos::STANDART, 0, 0, ImGuiButtonFlags_None, [](){});
+    bool clear = clearButton();
+
     ImGui::SameLine();
-    bool copy = ImGui_cWidgets::C_ButtonEx("copy", ImVec2(0,0), 5, ImGui_cWidgets::button_pos::STANDART, 0, ImGuiButtonFlags_None);
+
+    static Button copyButton("copy", ImVec2(0,0), 5, button_pos::STANDART, 0, 0, ImGuiButtonFlags_None, [](){});
+    bool copy = copyButton();
+
     ImGui::SameLine();
+
     Filter.Draw("Filter", -100.0f);
 
     ImGui::Separator();

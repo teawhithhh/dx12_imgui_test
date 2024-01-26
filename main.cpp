@@ -39,9 +39,9 @@ int main(int, char**)
     dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, static_cast<int>(positionX), static_cast<int>(positionY), 5);
 
     // Initialization imgui context
-    ImGuiContextNs::ImGuiWindowContext ImGuiWnd(wnd.get_hwnd(), WIDTH, HEIGHT-25, positionX, positionY);
+    ImGuiContextNs::ImGuiWindowContext imguiWnd(wnd.get_hwnd(), WIDTH, HEIGHT-25, positionX, positionY);
 
-    ImGuiWnd.currentWindow = ImGuiContextNs::id_wnd::login_window;
+    imguiWnd.g_currentWindow = ImGuiContextNs::id_wnd::login_window;
     bool done = false;
     while (!done)
     {
@@ -61,21 +61,21 @@ int main(int, char**)
         ::ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        if (ImGuiWnd.currentWindow == ImGuiContextNs::id_wnd::login_window)
-            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::login_window);
-        if (ImGuiWnd.currentWindow == ImGuiContextNs::id_wnd::test_window)
-            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::test_window);
-        if (ImGuiWnd.currentWindow == ImGuiContextNs::id_wnd::demo_window)
-            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::demo_window);
-        if (ImGuiWnd.loggerEnabled == true)
-            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::logger);
-        if (ImGuiWnd.decoratorEnabled == true)
-            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::window_decorator);
+        if (imguiWnd.g_currentWindow == ImGuiContextNs::id_wnd::login_window)
+            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::login_window);
+        if (imguiWnd.g_currentWindow == ImGuiContextNs::id_wnd::test_window)
+            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::test_window);
+        if (imguiWnd.g_currentWindow == ImGuiContextNs::id_wnd::demo_window)
+            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::demo_window);
+        if (imguiWnd.g_loggerEnabled == true)
+            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::logger);
+        if (imguiWnd.g_decoratorEnabled == true)
+            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::window_decorator);
 
-        SetWindowPos(wnd.get_hwnd(), NULL, positionX, positionY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
+        ::SetWindowPos(wnd.get_hwnd(), NULL, positionX, positionY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
 
        // Render frame imgui
-        ImGuiWnd.Render();
-        wnd.render_loop_dx12();
+        imguiWnd.Render();
+        wnd.RenderLoopDX12();
     }
 }
