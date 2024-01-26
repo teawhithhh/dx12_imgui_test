@@ -14,7 +14,7 @@ add_executable(main
     main.cpp
     ./dx_context/directx_context.cxx
     ./imgui_context/imgui_context.cxx
-    ./styles/spectrum.cxx
+    ./styles/style.cxx
     ./widgets/imgui_custom_widgets.cxx
     ./widgets/center_control_helper/center_control_helper.cxx
     ./windows/initialize_windows.cxx

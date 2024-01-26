@@ -11,4 +11,5 @@ enum WindowZOrder {
 namespace ImGui {
         void Begin( const char * name, WindowZOrder z_order, ImGuiWindowFlags flags );
 }
-#endif
+
+#endif // CONTROLER_Z_ORDER

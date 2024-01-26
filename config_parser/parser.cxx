@@ -6,6 +6,7 @@
 #include <fstream>
 
 
+
 Toml_Parser::Toml_Parser() {
     if (!std::filesystem::exists("config.toml"))
         write_cfg();
@@ -18,24 +19,24 @@ void Toml_Parser::write_cfg() {
 }
 
 void Toml_Parser::read_cfg() {
-    auto& log_ = Logger::GetLogger();
     std::ifstream inputFile("config.toml");
-    std::string str_cfg((std::istreambuf_iterator<char>(inputFile)),
-                         std::istreambuf_iterator<char>());
+    str_cfg.assign(std::istreambuf_iterator<char>(inputFile), std::istreambuf_iterator<char>());
     inputFile.close();
-    log_.AddLog(type_log::debug, "Readed toml config \n %s", str_cfg.c_str());
-
-    toml::table res;
     try {
         cfg = toml::parse(str_cfg);
-        log_.AddLog(type_log::info, "%s", "Parsing Succesed");
     } catch (const toml::parse_error& err) {
-        log_.AddLog(type_log::error, "%s", "Parsing failed");
         cfg = toml::parse(standart_cfg);
     }
 }
 
-toml::table& Toml_Parser::get_parse_result()
+static Toml_Parser g_parser = Toml_Parser();
+
+toml::table& get_parse_result()
 {
-    return cfg;
+    auto& log_ = Logger::GetLogger();
+    static bool firstParse = true;
+    if (firstParse == true)
+        log_.AddLog(type_log::debug, "Readed toml config \n %s", g_parser.str_cfg.c_str());
+    firstParse = false;
+    return g_parser.cfg;
 }

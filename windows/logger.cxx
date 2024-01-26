@@ -1,8 +1,12 @@
 #include "imgui.h"
+#include "style.hxx"
+#include "parser.hxx"
+#include "imgui_custom_widgets.hxx"
 #include "controler_z_order/control_z_order.hxx"
 #include "logger.hxx"
 #include <string>
 
+// Global usage logger
 static Logger g_Logger;
 
 Logger::Logger()
@@ -54,7 +58,11 @@ void Logger::AddLog(type_log type, const char* fmt, ...)
 
 void Logger::Draw(const char* title)
 {
+    auto& cfg = Toml_Parser::cfg;
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, CONFIG(["logger_window"]["logger_window_color"]));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, std::stof(cfg["logger_window"]["logger_window_rounding"].value_or("0.0")));
     ImGui::Begin(title, WindowZOrder::WindowZOrder_Logger, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+    ImGui::PopStyleColor();
 
     // Options menu
     if (ImGui::BeginPopup("Options"))
@@ -64,12 +72,12 @@ void Logger::Draw(const char* title)
     }
 
     // Main window
-    if (ImGui::Button("Options"))
+    if (ImGui_cWidgets::C_ButtonEx("options", ImVec2(0,0), 5, ImGui_cWidgets::button_pos::STANDART, 0, ImGuiButtonFlags_None))
         ImGui::OpenPopup("Options");
     ImGui::SameLine();
-    bool clear = ImGui::Button("Clear");
+    bool clear = ImGui_cWidgets::C_ButtonEx("clear", ImVec2(0,0), 5, ImGui_cWidgets::button_pos::STANDART, 0, ImGuiButtonFlags_None);
     ImGui::SameLine();
-    bool copy = ImGui::Button("Copy");
+    bool copy = ImGui_cWidgets::C_ButtonEx("copy", ImVec2(0,0), 5, ImGui_cWidgets::button_pos::STANDART, 0, ImGuiButtonFlags_None);
     ImGui::SameLine();
     Filter.Draw("Filter", -100.0f);
 
@@ -135,6 +143,8 @@ void Logger::Draw(const char* title)
             ImGui::SetScrollHereY(1.0f);
     }
     ImGui::EndChild();
+
+    ImGui::PopStyleVar();
     ImGui::End();
 
 }

@@ -14,8 +14,8 @@ bool test_window(int width, int height)
 
     ImGui::Begin("Hello, world!", WindowZOrder_MainWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    if (ImGui_cWidgets::C_Button("Button", ImVec2(300, 40), 10.0f))                           // Buttons return true when clicked (most widgets return true when edited/activated)
-        ImGui_context_ns::ImGui_context::current_window = ImGui_context_ns::id_wnd::login_window;
+    if (CENTERED_CONTROL(ImGui_cWidgets::C_Button("Button", ImVec2(300, 40), 10.0f)))                           // Buttons return true when clicked (most widgets return true when edited/activated)
+        ImGuiContextNs::ImGuiWindowContext::currentWindow = ImGuiContextNs::id_wnd::login_window;
     CENTERED_CONTROL(ImGui::Text("counter = %d", counter));
 
     #ifdef DEBUG

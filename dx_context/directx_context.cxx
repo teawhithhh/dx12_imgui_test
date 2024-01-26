@@ -2,10 +2,13 @@
 #define DX_SETUP
 
 #include "imgui.h"
+#include "stb_image.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <filesystem>
+#include <iostream>
 #include <tchar.h>
 #include <thread>
 
@@ -16,6 +19,13 @@
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 using namespace dx;
+
+Image::Image(std::filesystem::path path)
+{
+    my_texture_srv_cpu_handle.ptr += (handle_increment * descriptor_index);
+    my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
+    ret = DX_WINDOW::LoadTexturFromFile(path.string().c_str(), DX_WINDOW::g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
+}
 
 bool DX_WINDOW::CreateDeviceD3D()
 {
@@ -240,7 +250,7 @@ void DX_WINDOW::render_loop_dx12()
 
     // Render Dear ImGui graphics
 
-    const float clear_color_with_alpha[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    const float clear_color_with_alpha[4] = { 1.0f, 1.0f, 1.0f, 100.0f };
     g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
     g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
     g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
@@ -251,7 +261,6 @@ void DX_WINDOW::render_loop_dx12()
     g_pd3dCommandList->Close();
 
     g_pd3dCommandQueue->ExecuteCommandLists(1, reinterpret_cast<ID3D12CommandList* const*>(&g_pd3dCommandList));
-
     g_pSwapChain->Present(1, 0); // Present with vsync
     //g_pSwapChain->Present(0, 0); // Present without vsync
 
@@ -274,7 +283,7 @@ void DX_WINDOW::SetWindowRoundCorners()
     DeleteObject(hRgn);
 }
 
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI DX_WINDOW::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
@@ -291,6 +300,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             DX_WINDOW::CreateRenderTarget();
         }
         return 0;
+
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
             return 0;
@@ -302,13 +312,174 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
+bool DX_WINDOW::LoadTexturFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height)
+{
+    // Load from disk into a raw RGBA buffer
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
+        return false;
+
+    // Create texture resource
+    D3D12_HEAP_PROPERTIES props;
+    memset(&props, 0, sizeof(D3D12_HEAP_PROPERTIES));
+    props.Type = D3D12_HEAP_TYPE_DEFAULT;
+    props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+    D3D12_RESOURCE_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    desc.Alignment = 0;
+    desc.Width = image_width;
+    desc.Height = image_height;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    ID3D12Resource* pTexture = NULL;
+    d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+        D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&pTexture));
+
+    // Create a temporary upload resource to move the data in
+    UINT uploadPitch = (image_width * 4 + D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+    UINT uploadSize = image_height * uploadPitch;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment = 0;
+    desc.Width = uploadSize;
+    desc.Height = 1;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    props.Type = D3D12_HEAP_TYPE_UPLOAD;
+    props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+    ID3D12Resource* uploadBuffer = NULL;
+    HRESULT hr = d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&uploadBuffer));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    // Write pixels into the upload resource
+    void* mapped = NULL;
+    D3D12_RANGE range = { 0, uploadSize };
+    hr = uploadBuffer->Map(0, &range, &mapped);
+    IM_ASSERT(SUCCEEDED(hr));
+    for (int y = 0; y < image_height; y++)
+        memcpy(reinterpret_cast<void*>((uintptr_t)mapped + y * uploadPitch), image_data + y * image_width * 4, image_width * 4);
+    uploadBuffer->Unmap(0, &range);
+
+    // Copy the upload resource content into the real resource
+    D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
+    srcLocation.pResource = uploadBuffer;
+    srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    srcLocation.PlacedFootprint.Footprint.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srcLocation.PlacedFootprint.Footprint.Width = image_width;
+    srcLocation.PlacedFootprint.Footprint.Height = image_height;
+    srcLocation.PlacedFootprint.Footprint.Depth = 1;
+    srcLocation.PlacedFootprint.Footprint.RowPitch = uploadPitch;
+
+    D3D12_TEXTURE_COPY_LOCATION dstLocation = {};
+    dstLocation.pResource = pTexture;
+    dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    dstLocation.SubresourceIndex = 0;
+
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = pTexture;
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+    // Create a temporary command queue to do the copy with
+    ID3D12Fence* fence = NULL;
+    hr = d3d_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    HANDLE event = CreateEvent(0, 0, 0, 0);
+    IM_ASSERT(event != NULL);
+
+    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    queueDesc.NodeMask = 1;
+
+    ID3D12CommandQueue* cmdQueue = NULL;
+    hr = d3d_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    ID3D12CommandAllocator* cmdAlloc = NULL;
+    hr = d3d_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    ID3D12GraphicsCommandList* cmdList = NULL;
+    hr = d3d_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc, NULL, IID_PPV_ARGS(&cmdList));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, NULL);
+    cmdList->ResourceBarrier(1, &barrier);
+
+    hr = cmdList->Close();
+    IM_ASSERT(SUCCEEDED(hr));
+
+    // Execute the copy
+    cmdQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&cmdList);
+    hr = cmdQueue->Signal(fence, 1);
+    IM_ASSERT(SUCCEEDED(hr));
+
+    // Wait for everything to complete
+    fence->SetEventOnCompletion(1, event);
+    WaitForSingleObject(event, INFINITE);
+
+    // Tear down our temporary command queue and release the upload resource
+    cmdList->Release();
+    cmdAlloc->Release();
+    cmdQueue->Release();
+    CloseHandle(event);
+    fence->Release();
+    uploadBuffer->Release();
+
+    // Create a shader resource view for the texture
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    d3d_device->CreateShaderResourceView(pTexture, &srvDesc, srv_cpu_handle);
+
+    // Return results
+    *out_tex_resource = pTexture;
+    *out_width = image_width;
+    *out_height = image_height;
+    stbi_image_free(image_data);
+
+    return true;
+}
+
 DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int posY, int r_radius) : height{height_}, width{width_}, round_radius{r_radius}
 {
     wc = { sizeof(wc), CS_CLASSDC, &WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, name, nullptr };
+    wc.lpfnWndProc = &DX_WINDOW::WndProc;
     ::RegisterClassExW(&wc);
     hWnd = ::CreateWindowW(wc.lpszClassName, name, WS_POPUP | WS_OVERLAPPED | WS_BORDER, posX, posY, width_, height_, nullptr, nullptr, wc.hInstance, nullptr);
 
+
+    SetWindowLongPtr(hWnd, GWL_STYLE, GetWindowLongPtr(hWnd, GWL_STYLE) & ~WS_OVERLAPPEDWINDOW);
     SetWindowRoundCorners();
+
 
     // Initialize Direct3D
     if (!CreateDeviceD3D())
@@ -317,8 +488,6 @@ DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int
         ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
         exit(1);
     }
-
-    ::SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 0, ULW_COLORKEY);
     // Show the window
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hWnd);
@@ -330,4 +499,6 @@ DX_WINDOW::~DX_WINDOW()
     ::DestroyWindow(hWnd);
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 }
+
+
 #endif

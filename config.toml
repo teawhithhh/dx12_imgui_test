@@ -1,28 +1,10 @@
-#ifndef PARSER_TOML
-#define PARSER_TOML
-
-#include "toml.hpp"
-#include <string>
-#include <string_view>
-
-using namespace std::string_view_literals;
-
-toml::table& get_parse_result();
-
-class Toml_Parser {
-    public:
-        Toml_Parser();
-        inline static toml::table cfg;
-        inline static std::string str_cfg;
-    private:
-        inline static constexpr std::string_view standart_cfg =
-R"([text]
+[text]
 text_color = "0x000000"
 text_color_disabled = "0xffffff"
 
 [background]
 bg_color = "0xfeefd0"
-child_bg = "0xffffff"
+child_bg = "0xc6b79a"
 popup_bg = "0xffffff"
 frame_bg = "0x532D22"
 framge_bg_hovered = "0xffffff"
@@ -101,10 +83,7 @@ exit_button_color_hovered = "0xF55C5B"
 minimize_button_color = "0x9cb148"
 minimize_button_color_active = "0xacbf5e"
 minimize_button_color_hovered = "0x9cb148"
-)"sv;
 
+[login_window]
+login_window_rounding = "10.0"
 
-        void write_cfg();
-        void read_cfg();
-};
-#endif

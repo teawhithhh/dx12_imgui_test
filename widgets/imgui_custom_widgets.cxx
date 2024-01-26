@@ -1,34 +1,9 @@
-// dear imgui, v1.90.1 WIP
-// (widgets code)
-
 /*
+    Nazar Fingerkovskiy
+*/
 
-Index of this file:
-
-// [SECTION] Forward Declarations
-// [SECTION] Widgets: Text, etc.
-// [SECTION] Widgets: Main (Button, Image, Checkbox, RadioButton, ProgressBar, Bullet, etc.)
-// [SECTION] Widgets: Low-level Layout helpers (Spacing, Dummy, NewLine, Separator, etc.)
-// [SECTION] Widgets: ComboBox
-// [SECTION] Data Type and Data Formatting Helpers
-// [SECTION] Widgets: DragScalar, DragFloat, DragInt, etc.
-// [SECTION] Widgets: SliderScalar, SliderFloat, SliderInt, etc.
-// [SECTION] Widgets: InputScalar, InputFloat, InputInt, etc.
-// [SECTION] Widgets: InputText, InputTextMultiline
-// [SECTION] Widgets: ColorEdit, ColorPicker, ColorButton, etc.
-// [SECTION] Widgets: TreeNode, CollapsingHeader, etc.
-// [SECTION] Widgets: Selectable
-// [SECTION] Widgets: Typing-Select support
-// [SECTION] Widgets: Multi-Select support
-// [SECTION] Widgets: ListBox
-// [SECTION] Widgets: PlotLines, PlotHistogram
-// [SECTION] Widgets: Value helpers
-// [SECTION] Widgets: MenuItem, BeginMenu, EndMenu, etc.
-// [SECTION] Widgets: BeginTabBar, EndTabBar, etc.
-// [SECTION] Widgets: BeginTabItem, EndTabItem, etc.
 // [SECTION] Widgets: Columns, BeginColumns, EndColumns, etc.
 
-*/
 
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
@@ -37,12 +12,21 @@ Index of this file:
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
+// Center controler
 #include "center_control_helper/center_control_helper.hxx"
+
+// Parser
 #include "parser.hxx"
+
+// Declaration
 #include "imgui_custom_widgets.hxx"
+
+// Imgui includes
 #include "imgui_internal.h"
 #include "imgui.h"
-#include "spectrum.hxx"
+
+// Style includes
+#include "style.hxx"
 
 // System includes
 #include <stdint.h>     // intptr_t
@@ -73,12 +57,22 @@ Index of this file:
 #endif
 
 //-------------------------------------------------------------------------
-// Data
+// Implementations
 //-------------------------------------------------------------------------
 
 using namespace ImGui;
 
-bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, float rounding ,ImGuiButtonFlags flags)
+// Basic creating button
+// Input
+// label (c str)
+// size (ImVec2)
+// rounding button (float)
+// pos_button (button_pos)
+// margin from pos side (int)
+// margin from top (int)
+// button flags (ImGuiButtonFlags)
+
+bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, const float& rounding , button_pos pos_button, const int& margin, const int& top_margin, ImGuiButtonFlags flags)
 {
     auto& cfg = Toml_Parser::cfg;
 
@@ -95,6 +89,25 @@ bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, float
     if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
         pos.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
     ImVec2 size = CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+
+    switch (pos_button)
+    {
+    case button_pos::STANDART:
+        break;
+    case button_pos::left:
+        pos.x += margin;
+        break;
+
+    case button_pos::center:
+        pos.x = window->DC.CursorPos.x + (window->WorkRect.GetWidth() - size.x) * 0.5f;
+        break;
+
+    case button_pos::right:
+        pos.x = window->WorkRect.Max.x - size.x - margin;
+        break;
+    }
+
+    pos.y += top_margin;
 
     const ImRect bb(pos, pos + size);
     ItemSize(size, style.FramePadding.y);
@@ -123,7 +136,12 @@ bool ImGui_cWidgets::C_ButtonEx(const char* label, const ImVec2& size_arg, float
     return pressed;
 }
 
-bool ImGui_cWidgets::C_Button(const char* label, const ImVec2& size_arg, float rounding)
+// Simple creating button
+// Input
+// label (c str)
+// size (ImVec2)
+// rounding (float)
+bool ImGui_cWidgets::C_Button(const char* label, const ImVec2& size_arg, const float& rounding)
 {
-    return CENTERED_CONTROL(C_ButtonEx(label, size_arg, rounding, ImGuiButtonFlags_None));
+    return C_ButtonEx(label, size_arg, rounding, button_pos::STANDART, 10);
 }

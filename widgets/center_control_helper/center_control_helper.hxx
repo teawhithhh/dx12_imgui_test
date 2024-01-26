@@ -26,4 +26,4 @@ private:
 
 #define CENTERED_CONTROL(control) ControlCenter{ImGui::GetWindowSize()}([&]() { control; })
 
-#endif
+#endif // CENTER_CONTROL

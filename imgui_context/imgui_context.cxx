@@ -1,8 +1,5 @@
-#ifndef IMGUI_SETUP
-#define IMGUI_SETUP
-
 #include "imgui_context.hxx"
-#include "spectrum.hxx"
+#include "style.hxx"
 #include "directx_context.hxx"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -13,29 +10,29 @@
 #include <iostream>
 #include <memory>
 
-using namespace ImGui_context_ns;
+using namespace ImGuiContextNs;
 
-ImGui_context::ImGui_context(HWND hwnd_, int width_, int height_, int& posX_, int& posY_) : width{width_}, height{height_}, posX{posX_}, posY{posY_}, hwnd{hwnd_}
+ImGuiWindowContext::ImGuiWindowContext(HWND hwnd, int width, int height, int& posX, int& posY) : width_{width}, height_{height}, posX_{posX}, posY_{posY}, hwnd_{hwnd}
 {
-    initialize_wnd_vec();
+    InitializeWndMap();
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     auto &io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
     // Setup Dear ImGui style
-    ImGui::Spectrum::StyleColorsSpectrum();
+    ImGui::Style::SetupStyle();
     //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(hwnd);
+    ImGui_ImplWin32_Init(hwnd_);
     ImGui_ImplDX12_Init(dx::DX_WINDOW::g_pd3dDevice, dx::DX_WINDOW::NUM_FRAMES_IN_FLIGHT,
         DXGI_FORMAT_R8G8B8A8_UNORM, dx::DX_WINDOW::g_pd3dSrvDescHeap,
         dx::DX_WINDOW::g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
         dx::DX_WINDOW::g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
-ImGui_context::~ImGui_context()
+ImGuiWindowContext::~ImGuiWindowContext()
 {
     dx::DX_WINDOW::WaitForLastSubmittedFrame();
 
@@ -44,21 +41,18 @@ ImGui_context::~ImGui_context()
     ImGui::DestroyContext();
 }
 
-void ImGui_context::Render_()
+void ImGuiWindowContext::Render()
 {
     ImGuiContext * ctx = ImGui::GetCurrentContext();
     std::stable_sort( ctx->Windows.begin(), ctx->Windows.end(),
             []( const ImGuiWindow * a, const ImGuiWindow * b ) {
                     return a->BeginOrderWithinContext < b->BeginOrderWithinContext;
             }
-);
-
-ImGui::Render();
+    );
+    ImGui::Render();
 }
 
-bool ImGui_context::call_window(id_wnd index)
+bool ImGuiWindowContext::CallWindow(id_wnd index)
 {
-    return IMGUI_WINDOWS[index]();
+    return imguiWindows_[index]();
 }
-
-#endif

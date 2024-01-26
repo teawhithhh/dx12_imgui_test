@@ -11,6 +11,7 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <tchar.h>
+#include <iostream>
 #include "logger.hxx"
 
 #define WIDTH 900
@@ -31,21 +32,19 @@ int main(int, char**)
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    static int posX = (screenWidth/2)-WIDTH/2;
-    static int posY = (screenHeight/2)-HEIGHT/2;
+    static int positionX = (screenWidth/2)-WIDTH/2;
+    static int positionY = (screenHeight/2)-HEIGHT/2;
 
+    // Initialization directx context
+    dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, static_cast<int>(positionX), static_cast<int>(positionY), 5);
 
-    // Инициализация directx
-    dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, static_cast<int>(posX), static_cast<int>(posY), 10);
+    // Initialization imgui context
+    ImGuiContextNs::ImGuiWindowContext ImGuiWnd(wnd.get_hwnd(), WIDTH, HEIGHT-25, positionX, positionY);
 
-    // Инициализация dear imgui
-    ImGui_context_ns::ImGui_context imgui_wnd(wnd.get_hwnd(), WIDTH, HEIGHT-25, posX, posY);
-
-    imgui_wnd.current_window = ImGui_context_ns::id_wnd::login_window;
+    ImGuiWnd.currentWindow = ImGuiContextNs::id_wnd::login_window;
     bool done = false;
     while (!done)
     {
-        // Обработчик событий окна виндовc
         MSG msg;
         while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
         {
@@ -57,26 +56,26 @@ int main(int, char**)
         if (done)
             break;
 
-        // Начало кадра imgui
+        // Start frame imgui
         ::ImGui_ImplDX12_NewFrame();
         ::ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::login_window)
-            imgui_wnd.call_window(ImGui_context_ns::id_wnd::login_window);
-        if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::test_window)
-            imgui_wnd.call_window(ImGui_context_ns::id_wnd::test_window);
-        if (imgui_wnd.current_window == ImGui_context_ns::id_wnd::demo_window)
-            imgui_wnd.call_window(ImGui_context_ns::id_wnd::demo_window);
-        if (imgui_wnd.logger_enabled == true)
-            imgui_wnd.call_window(ImGui_context_ns::id_wnd::logger);
-        if (imgui_wnd.decorator_enabled == true)
-            imgui_wnd.call_window(ImGui_context_ns::id_wnd::window_decorator);
+        if (ImGuiWnd.currentWindow == ImGuiContextNs::id_wnd::login_window)
+            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::login_window);
+        if (ImGuiWnd.currentWindow == ImGuiContextNs::id_wnd::test_window)
+            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::test_window);
+        if (ImGuiWnd.currentWindow == ImGuiContextNs::id_wnd::demo_window)
+            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::demo_window);
+        if (ImGuiWnd.loggerEnabled == true)
+            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::logger);
+        if (ImGuiWnd.decoratorEnabled == true)
+            ImGuiWnd.CallWindow(ImGuiContextNs::id_wnd::window_decorator);
 
-        SetWindowPos(wnd.get_hwnd(), NULL, posX, posY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
+        SetWindowPos(wnd.get_hwnd(), NULL, positionX, positionY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
 
-       // Рендер кадра ImGui
-        imgui_wnd.Render_();
+       // Render frame imgui
+        ImGuiWnd.Render();
         wnd.render_loop_dx12();
     }
 }
