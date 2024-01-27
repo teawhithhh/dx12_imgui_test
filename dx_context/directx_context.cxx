@@ -11,6 +11,7 @@
 #include <iostream>
 #include <tchar.h>
 #include <thread>
+#include <dwmapi.h>
 
 #include "windows.h"
 
@@ -233,7 +234,7 @@ void DX_WINDOW::RenderLoopDX12()
     FrameContext* frameCtx = WaitForNextFrameResources();
 
     if (GetForegroundWindow()!=hWnd)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
     frameCtx->CommandAllocator->Reset();
@@ -291,6 +292,12 @@ LRESULT WINAPI DX_WINDOW::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
     switch (msg)
     {
     case WM_SIZE:
+        case WM_NCCALCSIZE:
+        {
+            return 0;
+            break;
+        }
+
         if (DX_WINDOW::g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
         {
             DX_WINDOW::WaitForLastSubmittedFrame();
@@ -309,7 +316,7 @@ LRESULT WINAPI DX_WINDOW::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
         ::PostQuitMessage(0);
         return 0;
     }
-    return ::DefWindowProcW(hWnd, msg, wParam, lParam);
+    return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 bool DX_WINDOW::LoadTexturFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height)
@@ -469,16 +476,28 @@ bool DX_WINDOW::LoadTexturFromFile(const char* filename, ID3D12Device* d3d_devic
     return true;
 }
 
+void DX_WINDOW::toggle_borderless(int posX, int posY, int width, int height)
+{
+    Style newStyle = Style::aero_borderless;
+    SetWindowLongPtr(hWnd, GWL_STYLE, static_cast<LONG>(newStyle));
+    toggle_shadow();
+    SetWindowPos(hWnd, NULL, posX, posY, width, height, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void DX_WINDOW::toggle_shadow()
+{
+    const MARGINS shadow_on = { 1, 1, 1, 1 };
+    DwmExtendFrameIntoClientArea(hWnd, &shadow_on);
+}
+
 DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int posY, int r_radius) : height{height_}, width{width_}, round_radius{r_radius}
 {
-    wc = { sizeof(wc), CS_CLASSDC, &WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, name, nullptr };
-    wc.lpfnWndProc = &DX_WINDOW::WndProc;
+    wc = { sizeof(wc), CS_HREDRAW | CS_VREDRAW, &WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, name, nullptr };
     ::RegisterClassExW(&wc);
-    hWnd = ::CreateWindowW(wc.lpszClassName, name, WS_POPUP | WS_OVERLAPPED | WS_BORDER, posX, posY, width_, height_, nullptr, nullptr, wc.hInstance, nullptr);
+    hWnd = ::CreateWindowW(wc.lpszClassName, name, static_cast<DWORD>(Style::windowed), posX, posY, width_, height_, nullptr, nullptr, wc.hInstance, nullptr);
 
-
-    SetWindowLongPtr(hWnd, GWL_STYLE, GetWindowLongPtr(hWnd, GWL_STYLE) & ~WS_OVERLAPPEDWINDOW);
     SetWindowRoundCorners();
+    std::cerr << "\nhz 2\n";
 
 
     // Initialize Direct3D
@@ -488,6 +507,7 @@ DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int
         ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
         exit(1);
     }
+ 	toggle_borderless(posX, posY, width_, height_);
     // Show the window
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hWnd);
@@ -496,6 +516,7 @@ DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int
 DX_WINDOW::~DX_WINDOW()
 {
     CleanupDeviceD3D();
+    ::ShowWindow(hWnd, SW_HIDE);
     ::DestroyWindow(hWnd);
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 }

@@ -10,7 +10,7 @@ set(STYLE_FLAGS "-D SPECTRUM_USE_LIGHT_THEME")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${STYLE_FLAGS} ${IMGUI_FLAGS} ${DEBUG_FLAGS}")
 
-add_executable(main
+add_executable(main WIN32
     main.cpp
     ./dx_context/directx_context.cxx
     ./imgui_context/imgui_context.cxx
@@ -41,4 +41,4 @@ include_directories(
 )
 
 # Линковка с библиотеками
-target_link_libraries(main PRIVATE d3dcompiler gdi32 dwmapi d3d12 user32 kernel32 dxgi)
+target_link_libraries(main PRIVATE d3dcompiler gdi32 dwmapi d3d12 user32 kernel32 dxgi dwmapi)

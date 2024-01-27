@@ -7,11 +7,12 @@
 #include "parser.hxx"
 #include "logger.hxx"
 #include "controler_z_order/control_z_order.hxx"
+#include "windows.h"
 
-void OnClickMinimize();
+void OnClickMinimize(HWND hwnd);
 void OnClickExit();
 
-void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize)
+void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize, HWND hwnd)
 {
     auto& cfg_ = Toml_Parser::cfg;
     ImGui::SetNextWindowPos(ImVec2(-1,-1));
@@ -43,7 +44,7 @@ void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize)
     }
 
     static Button exit_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 3, -2, ImGuiButtonFlags_None, OnClickExit);
-    static Button minimize_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 30, -2, ImGuiButtonFlags_None, OnClickMinimize);
+    static Button minimize_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 30, -2, ImGuiButtonFlags_None, [&](){ OnClickMinimize(hwnd); });
 
     ImGui::PushStyleColor(ImGuiCol_Button, CONFIG(["control_buttons"]["exit_button_color"]));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CONFIG(["control_buttons"]["exit_button_color_hovered"]));
@@ -62,9 +63,9 @@ void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize)
     ImGui::End();
 }
 
-void OnClickMinimize()
+void OnClickMinimize(HWND hwnd)
 {
-    exit(0);
+    ShowWindow(hwnd, SW_MINIMIZE);
 }
 
 void OnClickExit()

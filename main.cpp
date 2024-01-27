@@ -36,6 +36,7 @@ int main(int, char**)
     static int positionY = (screenHeight/2)-HEIGHT/2;
 
     // Initialization directx context
+
     dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, static_cast<int>(positionX), static_cast<int>(positionY), 5);
 
     // Initialization imgui context

@@ -25,6 +25,7 @@ struct dx::FrameContext
 
 class dx::DX_WINDOW {
 public:
+
                                                DX_WINDOW(const wchar_t*, int, int, int, int, int);
                                                ~DX_WINDOW();
 
@@ -48,6 +49,14 @@ public:
     inline static ID3D12DescriptorHeap*        g_pd3dSrvDescHeap = nullptr;
 
 private:
+    enum class Style : DWORD
+    {
+        windowed = (WS_OVERLAPPEDWINDOW | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME),
+        aero_borderless = ( WS_POPUP | WS_CAPTION | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX)
+    };
+
+    void toggle_borderless(int, int, int, int);
+    void toggle_shadow();
     WNDCLASSEXW                                wc;
     HWND                                       hWnd;
     int                                        height;
