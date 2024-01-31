@@ -10,6 +10,7 @@
 #include <iostream>
 #include <memory>
 
+#include "exeptions.hxx"
 using namespace ImGuiContextNs;
 
 ImGuiWindowContext::ImGuiWindowContext(HWND hwnd, int width, int height, int& posX, int& posY) : width_{width}, height_{height}, posX_{posX}, posY_{posY}, hwnd_{hwnd}
@@ -54,5 +55,7 @@ void ImGuiWindowContext::Render()
 
 bool ImGuiWindowContext::CallWindow(id_wnd index)
 {
+    int size = static_cast<int>(imguiWindows_.size());
+    expect<Error_action::terminating>([&index, &size](){ return size >= static_cast<int>(index); }, Error_code::call_window_error);
     return imguiWindows_[index]();
 }

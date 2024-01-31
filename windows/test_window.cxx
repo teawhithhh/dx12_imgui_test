@@ -14,7 +14,7 @@ bool test_window(int width, int height)
 
     ImGui::Begin("Hello, world!", WindowZOrder_MainWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    Button button("Button", ImVec2(300, 40), 10.0f, [](){ImGuiContextNs::ImGuiWindowContext::g_currentWindow = ImGuiContextNs::id_wnd::login_window;});
+    static Button button("Button", ImVec2(300, 40), 10.0f, [](){ImGuiContextNs::ImGuiWindowContext::g_currentWindow = ImGuiContextNs::id_wnd::login_window;});
     CENTERED_CONTROL(button());
     CENTERED_CONTROL(ImGui::Text("counter = %d", counter));
 

@@ -11,8 +11,16 @@ static Logger g_Logger;
 
 Logger::Logger()
 {
+    logFile.open("log.txt", std::ios::app);
     AutoScroll = true;
     Clear();
+}
+
+Logger::~Logger()
+{
+    logFile << Buf.c_str();
+    logFile.flush();
+    logFile.close();
 }
 
 void Logger::Clear()
@@ -32,25 +40,26 @@ void Logger::AddLog(type_log type, const char* fmt, ...)
     switch (type)
     {
         case type_log::debug:
-            type_str = "[debug]";
+            type_str = "[debug] ";
             break;
         case type_log::info:
-            type_str = "[info]";
+            type_str = "[info] ";
             break;
         case type_log::warning:
-            type_str = "[warning]";
+            type_str = "[warning] ";
             break;
         case type_log::error:
-            type_str = "[error]";
+            type_str = "[error] ";
             break;
         case type_log::critical_error:
-            type_str = "[critical error]";
+            type_str = "[critical error] ";
             break;
     }
     type_str += fmt;
 
     Buf.appendfv(type_str.c_str(), args);
     va_end(args);
+
     for (int new_size = Buf.size(); old_size < new_size; old_size++)
         if (Buf[old_size] == '\n')
             LineOffsets.push_back(old_size + 1);
@@ -91,6 +100,8 @@ void Logger::Draw(const char* title)
 
     ImGui::Separator();
 
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, std::stof(cfg_["logger_window"]["logger_child_rounding"].value_or("0.0")));
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, CONFIG(["logger_window"]["logger_childbg_color"]));
     if (ImGui::BeginChild("scrolling", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar))
     {
         if (clear)
@@ -112,7 +123,10 @@ void Logger::Draw(const char* title)
                 const char* line_start = buf + LineOffsets[line_no];
                 const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
                 if (Filter.PassFilter(line_start, line_end))
+                {
+                    ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPos().x + 10.0f, ImGui::GetCursorPos().y));
                     ImGui::TextUnformatted(line_start, line_end);
+                }
             }
         }
         else
@@ -138,6 +152,7 @@ void Logger::Draw(const char* title)
                 {
                     const char* line_start = buf + LineOffsets[line_no];
                     const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
+                    ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPos().x + 10.0f, ImGui::GetCursorPos().y));
                     ImGui::TextUnformatted(line_start, line_end);
                 }
             }
@@ -151,12 +166,16 @@ void Logger::Draw(const char* title)
             ImGui::SetScrollHereY(1.0f);
     }
     ImGui::EndChild();
+    ImGui::PopStyleColor();
 
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2);
     ImGui::End();
-
 }
 
 Logger& Logger::GetLogger() {
     return g_Logger;
+}
+
+void Logger::EndLogger() {
+    g_Logger.~Logger();
 }

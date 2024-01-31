@@ -16,16 +16,15 @@ void OnClickRegister();
 
 bool login_window(int width, int height)
 {
-    static auto& log_ = Logger::GetLogger();
     static auto& cfg = get_parse_result();
 
+    static char login[64];
     static char password[64];
-    log_.AddLog(type_log::debug, "%s\n", password);
 
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(width), static_cast<float>(height)));
     ImGui::SetNextWindowPos(ImVec2(0, 25));
 
-    ImGui::Begin("Hello, world!", WindowZOrder_MainWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
+    ImGui::Begin("Login Window", WindowZOrder_MainWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
     static dx::Image img_dx{"C:\\Users\\240821\\app\\imgui\\examples\\example_win32_directx12\\windows\\logo_500.png"};
 
@@ -35,7 +34,8 @@ bool login_window(int width, int height)
     ImGui::SetCursorPos(ImVec2(static_cast<float>(width)/2-200, static_cast<float>(height-(img_dx.my_image_height-30)-200-50)));
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, std::stof(cfg["login_window"]["login_window_rounding"].value_or("0.0")));
     ImGui::BeginChild("scrolling", ImVec2(400, 200), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar);
-    CENTERED_CONTROL(ImGui::InputTextWithHint(" ", "<password>", password, IM_ARRAYSIZE(password), ImGuiInputTextFlags_Password));
+    CENTERED_CONTROL(ImGui::InputTextEx(" ", "<Login>", login, IM_ARRAYSIZE(login), ImVec2(300, 50), 0, NULL, NULL));
+    CENTERED_CONTROL(ImGui::InputTextEx(" ", "<password>", password, IM_ARRAYSIZE(password), ImVec2(300, 50), 0, NULL, NULL));
     ImGui::PopStyleVar();
     ImGui::EndChild();
 

@@ -24,5 +24,5 @@ void ImGuiContextNs::ImGuiWindowContext::InitializeWndMap()
     WND_ARR[id_wnd::login_window] = LAMBDA_WINDOW(login_window);
     WND_ARR[id_wnd::demo_window] = std::function([](){bool result = false; ImGui::ShowDemoWindow(&result); return result;});
     WND_ARR[id_wnd::logger] = std::function([&log_](){bool result = true; log_.Draw("Logger"); return result; });
-    WND_ARR[id_wnd::window_decorator] = std::function([&](){ ImVec2 size(901, 26); Decorator("hz", posX_, posY_, size, hwnd_); return true; });
+    WND_ARR[id_wnd::window_decorator] = std::function([&](){ ImVec2 size(900, 25); Decorator("hz", size); return true; });
 }

@@ -5,17 +5,17 @@ project(test)
 set(CMAKE_CXX_STANDARD 23)
 
 set(IMGUI_DIR "C:/Users/240821/app/imgui")
-set(DEBUG_FLAGS "-D DEBUG -D DEBUG_STYLES")
-set(STYLE_FLAGS "-D SPECTRUM_USE_LIGHT_THEME")
+set(DEBUG_FLAGS "-D DEBUG -D DEBUG_STYLES -D DEBUG_DECORATOR")
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${STYLE_FLAGS} ${IMGUI_FLAGS} ${DEBUG_FLAGS}")
 
-add_executable(main WIN32
+add_executable(main
     main.cpp
     ./dx_context/directx_context.cxx
     ./imgui_context/imgui_context.cxx
     ./styles/style.cxx
     ./widgets/center_control_helper/center_control_helper.cxx
+    ./widgets/button_id_generator.cxx
     ./windows/initialize_windows.cxx
     ./windows/logger.cxx
     ./config_parser/parser.cxx
@@ -38,6 +38,7 @@ include_directories(
     ./dx_context
     ./windows
     ./config_parser
+    ./exeptions
 )
 
 # Линковка с библиотеками

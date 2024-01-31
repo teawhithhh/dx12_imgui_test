@@ -9,18 +9,19 @@
 #include "controler_z_order/control_z_order.hxx"
 #include "windows.h"
 
-void OnClickMinimize(HWND hwnd);
-void OnClickExit();
+void OnClickHz();
 
-void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize, HWND hwnd)
+void Decorator(const char* title, ImVec2& windowSize)
 {
     auto& cfg_ = Toml_Parser::cfg;
-    ImGui::SetNextWindowPos(ImVec2(-1,-1));
+    ImGui::SetNextWindowPos(ImVec2(0,0));
     ImGui::SetNextWindowSize(windowSize);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, CONFIG(["decorator"]["decorator_color"]));
+    ImGui::PushStyleColor(ImGuiCol_Border, CONFIG(["decorator"]["decorator_color"]));
     ImGui::Begin(title, WindowZOrder_Decorator, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    ImGui::PopStyleColor();
+    ImGui::PopStyleColor(2);
 
+    /*
     static bool is_holding;
 
     const auto cursorPos = ImGui::GetMousePos();
@@ -42,9 +43,10 @@ void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize, HWND
     } else if (!isMouseDown) {
         is_holding = false;
     }
+    */
 
-    static Button exit_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 3, -2, ImGuiButtonFlags_None, OnClickExit);
-    static Button minimize_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 30, -2, ImGuiButtonFlags_None, [&](){ OnClickMinimize(hwnd); });
+    static Button exit_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 3, -2, ImGuiButtonFlags_None, OnClickHz);
+    static Button minimize_button(" ", ImVec2(20,20), 10.0f, button_pos::right, 30, -2, ImGuiButtonFlags_None, OnClickHz);
 
     ImGui::PushStyleColor(ImGuiCol_Button, CONFIG(["control_buttons"]["exit_button_color"]));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, CONFIG(["control_buttons"]["exit_button_color_hovered"]));
@@ -63,12 +65,7 @@ void Decorator(const char* title, int& posX, int& posY, ImVec2& windowSize, HWND
     ImGui::End();
 }
 
-void OnClickMinimize(HWND hwnd)
+void OnClickHz()
 {
-    ShowWindow(hwnd, SW_MINIMIZE);
-}
-
-void OnClickExit()
-{
-    exit(0);
+    return;
 }

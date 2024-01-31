@@ -37,7 +37,7 @@ int main(int, char**)
 
     // Initialization directx context
 
-    dx::DX_WINDOW wnd(L"test", WIDTH, HEIGHT, static_cast<int>(positionX), static_cast<int>(positionY), 5);
+    dx::DX_WINDOW wnd(L"TeateiLauncher", WIDTH, HEIGHT, static_cast<int>(positionX), static_cast<int>(positionY), 5);
 
     // Initialization imgui context
     ImGuiContextNs::ImGuiWindowContext imguiWnd(wnd.get_hwnd(), WIDTH, HEIGHT-25, positionX, positionY);
@@ -73,7 +73,7 @@ int main(int, char**)
         if (imguiWnd.g_decoratorEnabled == true)
             imguiWnd.CallWindow(ImGuiContextNs::id_wnd::window_decorator);
 
-        ::SetWindowPos(wnd.get_hwnd(), NULL, positionX, positionY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
+        //::SetWindowPos(wnd.get_hwnd(), NULL, positionX, positionY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
 
        // Render frame imgui
         imguiWnd.Render();

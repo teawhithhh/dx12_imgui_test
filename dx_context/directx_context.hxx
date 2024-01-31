@@ -38,15 +38,16 @@ public:
     static void                                CleanupRenderTarget();
     static LRESULT WINAPI                      WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+    static LRESULT HitTest();
 
     HWND                                       get_hwnd() { return hWnd; }
     std::pair<int, int>                        get_size() { return std::pair<int, int>(width, height); }
 
     // Data
-    inline static int const                    NUM_FRAMES_IN_FLIGHT = 3;
-    inline static IDXGISwapChain3*             g_pSwapChain = nullptr;
-    inline static ID3D12Device*                g_pd3dDevice = nullptr;
-    inline static ID3D12DescriptorHeap*        g_pd3dSrvDescHeap = nullptr;
+    static int const                    NUM_FRAMES_IN_FLIGHT;
+    static IDXGISwapChain3*             g_pSwapChain;
+    static ID3D12Device*                g_pd3dDevice;
+    static ID3D12DescriptorHeap*        g_pd3dSrvDescHeap;
 
 private:
     enum class Style : DWORD
@@ -55,7 +56,6 @@ private:
         aero_borderless = ( WS_POPUP | WS_CAPTION | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX)
     };
 
-    void toggle_borderless(int, int, int, int);
     void toggle_shadow();
     WNDCLASSEXW                                wc;
     HWND                                       hWnd;
@@ -69,19 +69,19 @@ private:
     HRGN                                       CreateRoundRectRgn(int x, int y, int width, int height, int radius);
     void                                       SetWindowRoundCorners();
 
-    inline static FrameContext                 g_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
-    inline static UINT                         g_frameIndex = 0;
+    static FrameContext                 g_frameContext[3];
+    static UINT                         g_frameIndex;
 
-    inline static int const                    NUM_BACK_BUFFERS = 3;
-    inline static ID3D12DescriptorHeap*        g_pd3dRtvDescHeap = nullptr;
-    inline static ID3D12CommandQueue*          g_pd3dCommandQueue = nullptr;
-    inline static ID3D12GraphicsCommandList*   g_pd3dCommandList = nullptr;
-    inline static ID3D12Fence*                 g_fence = nullptr;
-    inline static HANDLE                       g_fenceEvent = nullptr;
-    inline static UINT64                       g_fenceLastSignaledValue = 0;
-    inline static HANDLE                       g_hSwapChainWaitableObject = nullptr;
-    inline static ID3D12Resource*              g_mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
-    inline static D3D12_CPU_DESCRIPTOR_HANDLE  g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
+    static int const                    NUM_BACK_BUFFERS;
+    static ID3D12DescriptorHeap*        g_pd3dRtvDescHeap;
+    static ID3D12CommandQueue*          g_pd3dCommandQueue;
+    static ID3D12GraphicsCommandList*   g_pd3dCommandList;
+    static ID3D12Fence*                 g_fence;
+    static HANDLE                       g_fenceEvent;
+    static UINT64                       g_fenceLastSignaledValue;
+    static HANDLE                       g_hSwapChainWaitableObject;
+    static ID3D12Resource*              g_mainRenderTargetResource[3];
+    static D3D12_CPU_DESCRIPTOR_HANDLE  g_mainRenderTargetDescriptor[3];
 
 };
 

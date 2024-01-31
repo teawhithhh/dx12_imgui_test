@@ -1,6 +1,7 @@
 #ifndef DX_SETUP
 #define DX_SETUP
 
+#include <cmath>
 #include "imgui.h"
 #include "stb_image.h"
 #include "imgui_impl_win32.h"
@@ -9,11 +10,10 @@
 #include <dxgi1_4.h>
 #include <filesystem>
 #include <iostream>
-#include <tchar.h>
-#include <thread>
+#include "exeptions.hxx"
 #include <dwmapi.h>
+#include <windowsx.h>
 
-#include "windows.h"
 
 #include "directx_context.hxx"
 
@@ -21,10 +21,31 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 using namespace dx;
 
+int const                    DX_WINDOW::NUM_FRAMES_IN_FLIGHT = 3;
+IDXGISwapChain3*             DX_WINDOW::g_pSwapChain = nullptr;
+ID3D12Device*                DX_WINDOW::g_pd3dDevice = nullptr;
+ID3D12DescriptorHeap*        DX_WINDOW::g_pd3dSrvDescHeap = nullptr;
+
+FrameContext                 DX_WINDOW::g_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
+UINT                         DX_WINDOW::g_frameIndex = 0;
+
+int const                    DX_WINDOW::NUM_BACK_BUFFERS = 3;
+ID3D12DescriptorHeap*        DX_WINDOW::g_pd3dRtvDescHeap = nullptr;
+ID3D12CommandQueue*          DX_WINDOW::g_pd3dCommandQueue = nullptr;
+ID3D12GraphicsCommandList*   DX_WINDOW::g_pd3dCommandList = nullptr;
+ID3D12Fence*                 DX_WINDOW::g_fence = nullptr;
+HANDLE                       DX_WINDOW::g_fenceEvent = nullptr;
+UINT64                       DX_WINDOW::g_fenceLastSignaledValue = 0;
+HANDLE                       DX_WINDOW::g_hSwapChainWaitableObject = nullptr;
+ID3D12Resource*              DX_WINDOW::g_mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
+D3D12_CPU_DESCRIPTOR_HANDLE  DX_WINDOW::g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
+
+
+
 Image::Image(std::filesystem::path path)
 {
-    my_texture_srv_cpu_handle.ptr += (handle_increment * descriptor_index);
-    my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
+    my_texture_srv_cpu_handle.ptr += (handle_increment * static_cast<UINT>(descriptor_index));
+    my_texture_srv_gpu_handle.ptr += (handle_increment * static_cast<UINT>(descriptor_index));
     ret = DX_WINDOW::LoadTexturFromFile(path.string().c_str(), DX_WINDOW::g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
 }
 
@@ -139,7 +160,6 @@ bool DX_WINDOW::CreateDeviceD3D()
         g_pSwapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
         g_hSwapChainWaitableObject = g_pSwapChain->GetFrameLatencyWaitableObject();
     }
-
     CreateRenderTarget();
     return true;
 }
@@ -236,6 +256,7 @@ void DX_WINDOW::RenderLoopDX12()
     if (GetForegroundWindow()!=hWnd)
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
+
     UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
     frameCtx->CommandAllocator->Reset();
 
@@ -291,30 +312,82 @@ LRESULT WINAPI DX_WINDOW::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     switch (msg)
     {
-    case WM_SIZE:
-        case WM_NCCALCSIZE:
+    case WM_NCHITTEST:
+        {
+            static RECT rcDraggable = {0, 0, 900, 30};
+            static POINT centerMinimize = {852, 16}; // Координаты центра круга
+            static POINT centerExit = {879, 16};
+            static int radius = 10; // Радиус круга
+            static auto& log_ = Logger::GetLogger();
+            RECT rc = rcDraggable;
+
+            MapWindowPoints(hWnd,   /* a handle to your window       */
+                NULL,   /* convert to screen coordinates */
+                reinterpret_cast<POINT*>(&rc),
+                (sizeof(RECT) / sizeof(POINT)));
+
+
+            const LRESULT result = ::DefWindowProc(hWnd, msg, wParam, lParam);
+            POINT pt;
+            pt.x = GET_X_LPARAM(lParam);
+            pt.y = GET_Y_LPARAM(lParam);
+
+            if ((result == HTCLIENT) && (PtInRect(&rc, pt)))
+            {
+                ScreenToClient(hWnd, &pt);
+#ifdef DEBUG_DECORATOR
+
+                log_.AddLog(type_log::debug, "button_pressed: %s; x1: %s ; x2: %s ; x2: %s ; y2: %s ; res: %s\n", ToString((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0).get(), ToString(pt.x).get(), ToString(pt.y).get(), ToString(centerMinimize.x).get(), ToString(centerMinimize.y).get(), ToString(sqrt(pow((pt.x - centerMinimize.x),2) + pow((pt.y - centerMinimize.y),2))).get());
+#endif
+                if ( ( sqrt(pow((pt.x - centerMinimize.x),2) + pow((pt.y - centerMinimize.y),2)) <= radius) && ( (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0) )
+                {
+                    ::ShowWindow(hWnd, SW_MINIMIZE);
+                }
+                else if ( ( sqrt(pow((pt.x - centerExit.x),2) + pow((pt.y - centerExit.y),2)) <= radius) && ( (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0) )
+                {
+                    PostQuitMessage(0);
+                }
+                else
+                {
+                    return HTCAPTION;
+                }
+            }
+            return result;
+        }
+
+    case WM_NCCALCSIZE:
         {
             return 0;
             break;
         }
 
-        if (DX_WINDOW::g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
+    case WM_SIZE:
         {
-            DX_WINDOW::WaitForLastSubmittedFrame();
-            DX_WINDOW::CleanupRenderTarget();
-            HRESULT result = DX_WINDOW::g_pSwapChain->ResizeBuffers(0, static_cast<UINT>(LOWORD(lParam)), static_cast<UINT>(HIWORD(lParam)), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
-            assert(SUCCEEDED(result) && "Failed to resize swapchain.");
-            DX_WINDOW::CreateRenderTarget();
-        }
-        return 0;
-
-    case WM_SYSCOMMAND:
-        if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+            if (DX_WINDOW::g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
+            {
+                DX_WINDOW::WaitForLastSubmittedFrame();
+                DX_WINDOW::CleanupRenderTarget();
+                HRESULT result = DX_WINDOW::g_pSwapChain->ResizeBuffers(0, static_cast<UINT>(LOWORD(lParam)), static_cast<UINT>(HIWORD(lParam)), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
+                assert(SUCCEEDED(result) && "Failed to resize swapchain.");
+                DX_WINDOW::CreateRenderTarget();
+            }
             return 0;
-        break;
+        }
+    case WM_NCLBUTTONDBLCLK:
+        {
+            return 0;
+        }
+    case WM_SYSCOMMAND:
+        {
+            if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+                return 0;
+            break;
+        }
     case WM_DESTROY:
-        ::PostQuitMessage(0);
-        return 0;
+        {
+            ::PostQuitMessage(0);
+            return 0;
+        }
     }
     return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
@@ -476,12 +549,9 @@ bool DX_WINDOW::LoadTexturFromFile(const char* filename, ID3D12Device* d3d_devic
     return true;
 }
 
-void DX_WINDOW::toggle_borderless(int posX, int posY, int width, int height)
+LRESULT DX_WINDOW::HitTest()
 {
-    Style newStyle = Style::aero_borderless;
-    SetWindowLongPtr(hWnd, GWL_STYLE, static_cast<LONG>(newStyle));
-    toggle_shadow();
-    SetWindowPos(hWnd, NULL, posX, posY, width, height, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
+
 }
 
 void DX_WINDOW::toggle_shadow()
@@ -492,22 +562,17 @@ void DX_WINDOW::toggle_shadow()
 
 DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int posY, int r_radius) : height{height_}, width{width_}, round_radius{r_radius}
 {
-    wc = { sizeof(wc), CS_HREDRAW | CS_VREDRAW, &WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, name, nullptr };
+    wc = { sizeof(wc), CS_HREDRAW | CS_VREDRAW, &WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"TeateiLauncher", nullptr };
     ::RegisterClassExW(&wc);
-    hWnd = ::CreateWindowW(wc.lpszClassName, name, static_cast<DWORD>(Style::windowed), posX, posY, width_, height_, nullptr, nullptr, wc.hInstance, nullptr);
+    hWnd = ::CreateWindowW(L"TeateiLauncher", LPCWSTR("Teatei Launcher"), static_cast<DWORD>(Style::aero_borderless), posX, posY, width_, height_, nullptr, nullptr, wc.hInstance, nullptr);
 
-    SetWindowRoundCorners();
-    std::cerr << "\nhz 2\n";
-
+    //SetWindowRoundCorners();
+    toggle_shadow();
 
     // Initialize Direct3D
-    if (!CreateDeviceD3D())
-    {
-        CleanupDeviceD3D();
-        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
-        exit(1);
-    }
- 	toggle_borderless(posX, posY, width_, height_);
+    expect<Error_action::terminating>([&](){ bool ret = CreateDeviceD3D(); if (!ret) { CleanupDeviceD3D(); ::UnregisterClassW(wc.lpszClassName, wc.hInstance); } return ret; }, Error_code::directx_creation_window_error);
+
+
     // Show the window
     ::ShowWindow(hWnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hWnd);
