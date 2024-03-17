@@ -7,7 +7,7 @@
 #include <string>
 
 // Global usage logger
-static Logger g_Logger;
+
 
 Logger::Logger()
 {
@@ -65,12 +65,54 @@ void Logger::AddLog(type_log type, const char* fmt, ...)
             LineOffsets.push_back(old_size + 1);
 }
 
-void Logger::Draw(const char* title)
+bool StartsWithBracketed(const char* str, const char* prefix) {
+    // Ищем открытую квадратную скобку
+    const char* bracket_open = strchr(str, '[');
+    if (bracket_open == nullptr)
+        return false; // Если нет квадратной скобки, то строка не начинается с указанного префикса
+
+    // Ищем закрывающую квадратную скобку
+    const char* bracket_close = strchr(bracket_open, ']');
+    if (bracket_close == nullptr || bracket_close - bracket_open < 2)
+        return false; // Если нет закрывающей скобки или между скобками нет символов, строка не начинается с указанного префикса
+
+    // Сравниваем содержимое между скобками с указанным префиксом
+    return strncmp(bracket_open + 1, prefix, static_cast<size_t>(bracket_close - bracket_open) - 1) == 0;
+}
+
+bool SetColor(const char* str)
 {
     auto& cfg_ = Toml_Parser::cfg;
+    if (StartsWithBracketed(str, "debug"))
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, CONFIG(["logger_window"]["logger_debug_color"]));
+        return true;
+    } else if (StartsWithBracketed(str, "info")) {
+        ImGui::PushStyleColor(ImGuiCol_Text, CONFIG(["logger_window"]["logger_info_color"]));
+        return true;
+    } else if (StartsWithBracketed(str, "warning")) {
+        ImGui::PushStyleColor(ImGuiCol_Text, CONFIG(["logger_window"]["logger_warning_color"]));
+        return true;
+    } else if (StartsWithBracketed(str, "error")) {
+        ImGui::PushStyleColor(ImGuiCol_Text, CONFIG(["logger_window"]["logger_error_color"]));
+        return true;
+    } else if (StartsWithBracketed(str, "critical error")) {
+        ImGui::PushStyleColor(ImGuiCol_Text, CONFIG(["logger_window"]["logger_critical_color"]));
+        return true;
+    }
+
+    return false;
+}
+
+bool Logger::Render()
+{
+    auto& cfg_ = Toml_Parser::cfg;
+
+    ImGui::SetNextWindowSize(ImVec2(500, 350));
+
     ImGui::PushStyleColor(ImGuiCol_WindowBg, CONFIG(["logger_window"]["logger_window_color"]));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, std::stof(cfg_["logger_window"]["logger_window_rounding"].value_or("0.0")));
-    ImGui::Begin(title, WindowZOrder::WindowZOrder_Logger, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+    ImGui::Begin("logger", WindowZOrder::WindowZOrder_Logger, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
     ImGui::PopStyleColor();
 
     // Options menu
@@ -125,7 +167,10 @@ void Logger::Draw(const char* title)
                 if (Filter.PassFilter(line_start, line_end))
                 {
                     ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPos().x + 10.0f, ImGui::GetCursorPos().y));
+                    bool res = SetColor(line_start);
                     ImGui::TextUnformatted(line_start, line_end);
+                    if (res)
+                        ImGui::PopStyleColor();
                 }
             }
         }
@@ -153,7 +198,10 @@ void Logger::Draw(const char* title)
                     const char* line_start = buf + LineOffsets[line_no];
                     const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
                     ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPos().x + 10.0f, ImGui::GetCursorPos().y));
+                    bool res = SetColor(line_start);
                     ImGui::TextUnformatted(line_start, line_end);
+                    if (res)
+                        ImGui::PopStyleColor();
                 }
             }
             clipper.End();
@@ -170,12 +218,14 @@ void Logger::Draw(const char* title)
 
     ImGui::PopStyleVar(2);
     ImGui::End();
+
+    return true;
 }
 
 Logger& Logger::GetLogger() {
-    return g_Logger;
+    return Window::GetInstance<Logger>();
 }
 
 void Logger::EndLogger() {
-    g_Logger.~Logger();
+    Window::GetInstance<Logger>().~Logger();
 }

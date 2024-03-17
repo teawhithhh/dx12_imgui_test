@@ -1,5 +1,5 @@
-#ifndef BUTTON
-#define BUTTON
+#ifndef COMBO
+#define COMBO
 
 #define IM_VEC2_CLASS_EXTRA
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -16,12 +16,10 @@
 
 #include "widget.hxx"
 
-enum class button_pos { left, center, right, STANDART };
-
 template <typename Func>
-class Button : public Widget {
+class Combo : public Widget {
     public:
-        Button(std::string label, const ImVec2& sizeArg, const float& rounding, button_pos posButton, const int& margin, const int& topMargin, ImGuiButtonFlags flags, Func onClick) : label_{label}, sizeArg_{sizeArg}, rounding_{rounding}, posButton_{posButton}, margin_{margin}, topMargin_{topMargin}, flags_{flags}, onClick_{onClick}
+        Combo(std::string label, const ImVec2& sizeArg, const float& rounding, button_pos posButton, const int& margin, const int& topMargin, ImGuiButtonFlags flags, Func onClick) : label_{label}, sizeArg_{sizeArg}, rounding_{rounding}, posButton_{posButton}, margin_{margin}, topMargin_{topMargin}, flags_{flags}, onClick_{onClick}
         {
             using namespace ImGui;
 
@@ -37,7 +35,7 @@ class Button : public Widget {
             log_.AddLog(type_log::info, "Created button full settings, label: \"%s\", id: %s\n", label_.c_str(), std::to_string(id_).c_str());
         }
 
-        Button(std::string label, const ImVec2& sizeArg, const float& rounding, Func onClick) : label_{label}, sizeArg_{sizeArg}, rounding_{rounding}, posButton_{button_pos::STANDART}, margin_{0}, topMargin_{0}, flags_{ImGuiButtonFlags_None}, onClick_{onClick}
+        Combo(std::string label, const ImVec2& sizeArg, const float& rounding, Func onClick) : label_{label}, sizeArg_{sizeArg}, rounding_{rounding}, posButton_{button_pos::STANDART}, margin_{0}, topMargin_{0}, flags_{ImGuiButtonFlags_None}, onClick_{onClick}
         {
             using namespace ImGui;
 

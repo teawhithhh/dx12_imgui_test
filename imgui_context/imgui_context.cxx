@@ -57,5 +57,5 @@ bool ImGuiWindowContext::CallWindow(id_wnd index)
 {
     int size = static_cast<int>(imguiWindows_.size());
     expect<Error_action::terminating>([&index, &size](){ return size >= static_cast<int>(index); }, Error_code::call_window_error);
-    return imguiWindows_[index]();
+    return (*imguiWindows_[index]).Render();
 }

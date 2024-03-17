@@ -1,12 +1,14 @@
 #ifndef IMGUI_CONTEXT
 #define IMGUI_CONTEXT
 
-#include <d3d12.h> // hwnd
-#include <functional> // std::function
-#include <unordered_set> // unordered_map
+#include <d3d12.h>
+#include <functional>
+#include <memory>
+#include <unordered_map>
+#include "window.hxx"
 
 namespace ImGuiContextNs{
-    enum class id_wnd { window_decorator, test_window, login_window, demo_window, logger };
+    enum class id_wnd { window_decorator, main_window, login_window, logger };
 
     class ImGuiWindowContext {
         public:
@@ -26,7 +28,7 @@ namespace ImGuiContextNs{
 
             HWND hwnd_;
             void InitializeWndMap();
-            std::unordered_map<id_wnd, std::function<bool()>> imguiWindows_;
+            std::unordered_map<id_wnd, Window*> imguiWindows_;
     };
 } // ImGuiContextNs
 

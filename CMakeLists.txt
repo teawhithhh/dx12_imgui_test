@@ -5,21 +5,32 @@ project(test)
 set(CMAKE_CXX_STANDARD 23)
 
 set(IMGUI_DIR "C:/Users/240821/app/imgui")
-set(DEBUG_FLAGS "-D DEBUG -D DEBUG_STYLES -D DEBUG_DECORATOR")
+set(DEBUG_FLAGS "-D DEBUG")
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${STYLE_FLAGS} ${IMGUI_FLAGS} ${DEBUG_FLAGS}")
+SET(CMAKE_CXX_FLAGS  "-static -static-libgcc -static-libstdc++ -fno-rtti -O5 ${CMAKE_CXX_FLAGS} ${STYLE_FLAGS} ${IMGUI_FLAGS} ${DEBUG_FLAGS}")
 
 add_executable(main
     main.cpp
+    resources.o
+
     ./dx_context/directx_context.cxx
     ./imgui_context/imgui_context.cxx
+
     ./styles/style.cxx
+
     ./widgets/center_control_helper/center_control_helper.cxx
-    ./widgets/button_id_generator.cxx
+    ./widgets/id_generator.cxx
+    ./widgets/input_text.cxx
+
     ./windows/initialize_windows.cxx
     ./windows/logger.cxx
+    ./windows/login_window.cxx
+    ./windows/window_decorator.cxx
+    ./windows/main_window.cxx
+
     ./config_parser/parser.cxx
     ./windows/controler_z_order/control_z_order.cxx
+
     ${IMGUI_DIR}/imgui.cpp
     ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
     ${IMGUI_DIR}/backends/imgui_impl_dx12.cpp

@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <tchar.h>
 #include <thread>
+#include <chrono>
 
 namespace dx {
     struct FrameContext;
@@ -29,7 +30,7 @@ public:
                                                DX_WINDOW(const wchar_t*, int, int, int, int, int);
                                                ~DX_WINDOW();
 
-    static bool                                LoadTexturFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height);
+    static bool                                LoadTexture(unsigned char* data, unsigned int length, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height);
     void                                       RenderLoopDX12();
 
     FrameContext*                              WaitForNextFrameResources();
@@ -37,8 +38,7 @@ public:
     static void                                CreateRenderTarget();
     static void                                CleanupRenderTarget();
     static LRESULT WINAPI                      WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-    static LRESULT HitTest();
+    static LRESULT CALLBACK                           KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
     HWND                                       get_hwnd() { return hWnd; }
     std::pair<int, int>                        get_size() { return std::pair<int, int>(width, height); }
@@ -48,7 +48,11 @@ public:
     static IDXGISwapChain3*             g_pSwapChain;
     static ID3D12Device*                g_pd3dDevice;
     static ID3D12DescriptorHeap*        g_pd3dSrvDescHeap;
+    static char                         keyPressed;
+    static bool                         backSpacePressed;
+    static DWORD                        wVirtKey;
 
+    inline static HHOOK                        keyboardHook = {};
 private:
     enum class Style : DWORD
     {
@@ -68,6 +72,13 @@ private:
 
     HRGN                                       CreateRoundRectRgn(int x, int y, int width, int height, int radius);
     void                                       SetWindowRoundCorners();
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+
+    ImVec4 start_color = ImVec4(244.0f / 255.0f, 234.0f / 255.0f, 213.0f / 255.0f, 100.0f / 255.0f);
+    ImVec4 end_color =  ImVec4(198.0f / 255.0f, 183.0f / 255.0f, 154.0f / 255.0f, 100.0f / 255.0f);   // Конечный цвет (красный)
+
+    float interpolation_factor = 0.0f;  // Коэффициент интерполяции
 
     static FrameContext                 g_frameContext[3];
     static UINT                         g_frameIndex;
@@ -90,7 +101,7 @@ public:
     // We need to pass a D3D12_CPU_DESCRIPTOR_HANDLE in ImTextureID, so make sure it will fit
     static_assert(sizeof(ImTextureID) >= sizeof(D3D12_CPU_DESCRIPTOR_HANDLE), "D3D12_CPU_DESCRIPTOR_HANDLE is too large to fit in an ImTextureID");
 
-    Image(std::filesystem::path path);
+    Image(unsigned char* data, unsigned int length);
 
     Image(const Image &) = default;
     Image(Image &&) = default;

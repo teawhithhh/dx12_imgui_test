@@ -3,6 +3,7 @@
 */
 
 #include "imgui_context.hxx"
+#include "logger.hxx"
 #include "directx_context.hxx"
 #include "windows.h"
 #include "imgui.h"
@@ -41,9 +42,9 @@ int main(int, char**)
 
     // Initialization imgui context
     ImGuiContextNs::ImGuiWindowContext imguiWnd(wnd.get_hwnd(), WIDTH, HEIGHT-25, positionX, positionY);
-
     imguiWnd.g_currentWindow = ImGuiContextNs::id_wnd::login_window;
     bool done = false;
+
     while (!done)
     {
         MSG msg;
@@ -64,18 +65,13 @@ int main(int, char**)
 
         if (imguiWnd.g_currentWindow == ImGuiContextNs::id_wnd::login_window)
             imguiWnd.CallWindow(ImGuiContextNs::id_wnd::login_window);
-        if (imguiWnd.g_currentWindow == ImGuiContextNs::id_wnd::test_window)
-            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::test_window);
-        if (imguiWnd.g_currentWindow == ImGuiContextNs::id_wnd::demo_window)
-            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::demo_window);
+        if (imguiWnd.g_currentWindow == ImGuiContextNs::id_wnd::main_window)
+            imguiWnd.CallWindow(ImGuiContextNs::id_wnd::main_window);
         if (imguiWnd.g_loggerEnabled == true)
             imguiWnd.CallWindow(ImGuiContextNs::id_wnd::logger);
         if (imguiWnd.g_decoratorEnabled == true)
             imguiWnd.CallWindow(ImGuiContextNs::id_wnd::window_decorator);
 
-        //::SetWindowPos(wnd.get_hwnd(), NULL, positionX, positionY, WIDTH, HEIGHT, SWP_NOSIZE | SWP_NOZORDER);
-
-       // Render frame imgui
         imguiWnd.Render();
         wnd.RenderLoopDX12();
     }

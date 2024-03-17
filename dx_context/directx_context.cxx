@@ -12,8 +12,11 @@
 #include <iostream>
 #include "exeptions.hxx"
 #include <dwmapi.h>
+#include <vector>
 #include <windowsx.h>
+#include <chrono>
 
+#include "resources.h"
 
 #include "directx_context.hxx"
 
@@ -39,14 +42,17 @@ UINT64                       DX_WINDOW::g_fenceLastSignaledValue = 0;
 HANDLE                       DX_WINDOW::g_hSwapChainWaitableObject = nullptr;
 ID3D12Resource*              DX_WINDOW::g_mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
 D3D12_CPU_DESCRIPTOR_HANDLE  DX_WINDOW::g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
+char DX_WINDOW::keyPressed = ' ';
+DWORD DX_WINDOW::wVirtKey = 0;
+bool DX_WINDOW::backSpacePressed = false;
 
 
 
-Image::Image(std::filesystem::path path)
+Image::Image(unsigned char* data, unsigned int length)
 {
     my_texture_srv_cpu_handle.ptr += (handle_increment * static_cast<UINT>(descriptor_index));
     my_texture_srv_gpu_handle.ptr += (handle_increment * static_cast<UINT>(descriptor_index));
-    ret = DX_WINDOW::LoadTexturFromFile(path.string().c_str(), DX_WINDOW::g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
+    ret = DX_WINDOW::LoadTexture(data, length, DX_WINDOW::g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
 }
 
 bool DX_WINDOW::CreateDeviceD3D()
@@ -253,8 +259,8 @@ void DX_WINDOW::RenderLoopDX12()
 {
     FrameContext* frameCtx = WaitForNextFrameResources();
 
-    if (GetForegroundWindow()!=hWnd)
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//    if (GetForegroundWindow()!=hWnd)
+//        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 
     UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
@@ -271,8 +277,17 @@ void DX_WINDOW::RenderLoopDX12()
     g_pd3dCommandList->ResourceBarrier(1, &barrier);
 
     // Render Dear ImGui graphics
+    const float time = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - start_time).count();
+    interpolation_factor = std::sin(time) * 0.5f + 0.5f;
 
-    const float clear_color_with_alpha[4] = { 1.0f, 1.0f, 1.0f, 100.0f };
+    ImVec4 current_color = ImVec4(
+        start_color.x + interpolation_factor * (end_color.x - start_color.x),
+        start_color.y + interpolation_factor * (end_color.y - start_color.y),
+        start_color.z + interpolation_factor * (end_color.z - start_color.z),
+        start_color.w + interpolation_factor * (end_color.w - start_color.w)
+    );
+
+    const float clear_color_with_alpha[4] = { current_color.x, current_color.y, current_color.z, current_color.w };
     g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
     g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
     g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
@@ -392,12 +407,59 @@ LRESULT WINAPI DX_WINDOW::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
     return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-bool DX_WINDOW::LoadTexturFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height)
+LRESULT CALLBACK DX_WINDOW::KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    static bool shiftPressed = false;
+
+    if (nCode >= 0) {
+        if (wParam == WM_KEYUP)
+        {
+            KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
+            wVirtKey = kbdStruct->vkCode;
+            if (wVirtKey == 160)
+            {
+                shiftPressed = false;
+                std::cout << "shift unpressed\n";
+            } else if (wVirtKey == 8){
+                backSpacePressed = false;
+            }
+        }
+        if (wParam == WM_KEYDOWN) {
+            KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
+            wVirtKey = kbdStruct->vkCode;
+
+            if (wVirtKey == 160)
+            {
+                shiftPressed = true;
+                std::cout << "shift pressed\n";
+            } else if (wVirtKey == 8){
+                backSpacePressed = true;
+            }
+
+            char keyChar = static_cast<char>(MapVirtualKey(wVirtKey, MAPVK_VK_TO_CHAR));
+
+            if (isalpha(keyChar)) {
+                if (shiftPressed){
+                    keyPressed = std::toupper(keyChar);
+                } else {
+                    keyPressed = std::tolower(keyChar);
+                }
+            }
+            std::cout << "Key " << wVirtKey << " is pressed." << std::endl;
+        }
+    }
+
+    return CallNextHookEx(keyboardHook, nCode, wParam, lParam);
+}
+
+bool DX_WINDOW::LoadTexture(unsigned char* data, unsigned int length, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height)
 {
     // Load from disk into a raw RGBA buffer
     int image_width = 0;
     int image_height = 0;
-    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    int channels = 0;
+
+    unsigned char* image_data = stbi_load_from_memory(data, static_cast<int>(length), &image_width, &image_height, &channels, 4);
+
     if (image_data == NULL)
         return false;
 
@@ -549,11 +611,6 @@ bool DX_WINDOW::LoadTexturFromFile(const char* filename, ID3D12Device* d3d_devic
     return true;
 }
 
-LRESULT DX_WINDOW::HitTest()
-{
-
-}
-
 void DX_WINDOW::toggle_shadow()
 {
     const MARGINS shadow_on = { 1, 1, 1, 1 };
@@ -564,10 +621,17 @@ DX_WINDOW::DX_WINDOW(const wchar_t* name, int width_, int height_, int posX, int
 {
     wc = { sizeof(wc), CS_HREDRAW | CS_VREDRAW, &WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"TeateiLauncher", nullptr };
     ::RegisterClassExW(&wc);
+    wc.hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_MYICON));
     hWnd = ::CreateWindowW(L"TeateiLauncher", LPCWSTR("Teatei Launcher"), static_cast<DWORD>(Style::aero_borderless), posX, posY, width_, height_, nullptr, nullptr, wc.hInstance, nullptr);
+    keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, &DX_WINDOW::KeyboardProc, NULL, 0);
 
-    //SetWindowRoundCorners();
-    toggle_shadow();
+    SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)wc.hIcon);
+    SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)wc.hIcon);
+    start_time = std::chrono::high_resolution_clock::now();
+    interpolation_factor = 0.0f;
+
+    SetWindowRoundCorners();
+    //toggle_shadow();
 
     // Initialize Direct3D
     expect<Error_action::terminating>([&](){ bool ret = CreateDeviceD3D(); if (!ret) { CleanupDeviceD3D(); ::UnregisterClassW(wc.lpszClassName, wc.hInstance); } return ret; }, Error_code::directx_creation_window_error);
@@ -582,6 +646,7 @@ DX_WINDOW::~DX_WINDOW()
 {
     CleanupDeviceD3D();
     ::ShowWindow(hWnd, SW_HIDE);
+    ::UnhookWindowsHookEx(keyboardHook);
     ::DestroyWindow(hWnd);
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 }

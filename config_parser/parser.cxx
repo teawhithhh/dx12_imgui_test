@@ -3,11 +3,9 @@
 #include "parser.hxx"
 #include "logger.hxx"
 #include <filesystem>
-#include <iostream>
 #include <string_view>
 #include <fstream>
 #include "exeptions.hxx"
-#include "toml.hpp"
 
 Toml_Parser::Toml_Parser() {
     if (!std::filesystem::exists("config.toml"))
@@ -41,7 +39,7 @@ toml::table& get_parse_result()
     if (firstParse == true)
     {
         toml::parse_result res = toml::parse_file("config.toml");
-        log_.AddLog(type_log::debug, "Readed toml config.\n");
+        log_.AddLog(type_log::info, "Reading toml config.\n");
         expect([&res](){ return res ? 1 : 0; }, Error_code::parser_error);
     }
 
